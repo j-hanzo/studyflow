@@ -6,9 +6,11 @@ import {
   TrendingUp, AlertCircle, ChevronRight, Plus,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
+import AddClassModal from "./AddClassModal";
 import type { Profile, Class, Assignment, StudySession, Message } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Props {
   profile: Profile;
@@ -43,7 +45,9 @@ function formatDate(dateStr: string) {
 
 export default function StudentDashboard({ profile, classes, assignments, studySessions, messages }: Props) {
   const [sessions, setSessions] = useState(studySessions);
+  const [showAddClass, setShowAddClass] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
 
   const completedToday = sessions.filter((s) => s.completed).length;
@@ -63,7 +67,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar mode="student" classes={classes} profile={profile} />
+      {showAddClass && (
+        <AddClassModal
+          studentId={profile.id}
+          onClose={() => setShowAddClass(false)}
+          onSaved={() => { setShowAddClass(false); router.refresh(); }}
+        />
+      )}
+      <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
 
       <main className="flex-1 overflow-auto">
         {/* Header */}
@@ -223,7 +234,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   <div className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-8 text-center">
                     <p className="text-sm font-medium text-slate-600 mb-1">No classes yet</p>
                     <p className="text-xs text-slate-400 mb-4">Add your first class to get started</p>
-                    <button className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-medium bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg">
+                    <button
+                      onClick={() => setShowAddClass(true)}
+                      className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-medium bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg"
+                    >
                       <Plus className="w-4 h-4" />
                       Add class
                     </button>
@@ -247,7 +261,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                         </Link>
                       );
                     })}
-                    <button className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-4 flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-indigo-600 hover:border-indigo-300">
+                    <button
+                      onClick={() => setShowAddClass(true)}
+                      className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-4 flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-indigo-600 hover:border-indigo-300"
+                    >
                       <Plus className="w-4 h-4" />
                       Add class
                     </button>

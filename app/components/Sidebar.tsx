@@ -37,13 +37,14 @@ interface Props {
   mode: "student" | "parent";
   profile?: Profile;
   classes?: Class[];
+  onAddClass?: () => void;
 }
 
 const defaultProfile: Profile = {
   id: "", role: "student", full_name: "You", grade: null, color: null, created_at: "",
 };
 
-export default function Sidebar({ mode, profile = defaultProfile, classes = [] }: Props) {
+export default function Sidebar({ mode, profile = defaultProfile, classes = [], onAddClass }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -121,7 +122,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [] }
             <div className="pt-4 pb-2">
               <div className="flex items-center justify-between px-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">My Classes</span>
-                <button className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">+ Add</button>
+                <button onClick={onAddClass} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">+ Add</button>
               </div>
             </div>
             {classes.map((cls) => (
