@@ -33,6 +33,19 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
     .order("created_at", { ascending: false });
   const materials = (materialsData ?? []) as Material[];
 
+  // Generate signed URLs for materials that have a stored photo
+  const signedUrls: Record<string, string> = {};
+  await Promise.all(
+    materials
+      .filter((m) => m.photo_url)
+      .map(async (m) => {
+        const { data } = await supabase.storage
+          .from("materials")
+          .createSignedUrl(m.photo_url!, 3600);
+        if (data?.signedUrl) signedUrls[m.id] = data.signedUrl;
+      })
+  );
+
   // Fetch assignments for this class
   const { data: assignmentsData } = await db
     .from("assignments")
@@ -47,6 +60,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
       cls={cls}
       allClasses={allClasses}
       materials={materials}
+      signedUrls={signedUrls}
       assignments={assignments}
     />
   );

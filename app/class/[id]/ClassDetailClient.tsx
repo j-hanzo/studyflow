@@ -18,6 +18,7 @@ interface Props {
   cls: Class;
   allClasses: Class[];
   materials: Material[];
+  signedUrls: Record<string, string>;
   assignments: Assignment[];
 }
 
@@ -37,7 +38,7 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function ClassDetailClient({ profile, cls, allClasses, materials, assignments }: Props) {
+export default function ClassDetailClient({ profile, cls, allClasses, materials, signedUrls, assignments }: Props) {
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "notes" | "assignment" | "handout">("all");
   const [search, setSearch] = useState("");
@@ -63,10 +64,9 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
   }
 
   const tabs = [
-    { key: "all",        label: "All Materials", icon: BookOpen    },
-    { key: "notes",      label: "Notes",          icon: StickyNote  },
-    { key: "assignment", label: "Assignments",    icon: ClipboardList },
-    { key: "handout",    label: "Handouts",       icon: FileText    },
+    { key: "all",     label: "All",      icon: BookOpen   },
+    { key: "notes",   label: "Notes",    icon: StickyNote },
+    { key: "handout", label: "Handouts", icon: FileText   },
   ] as const;
 
   return (
@@ -176,18 +176,26 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
                 filteredMaterials.map((m) => {
                   const config = typeConfig[m.type] ?? typeConfig.notes;
                   const Icon = config.icon;
+                  const thumb = signedUrls[m.id];
                   return (
-                    <div
+                    <Link
                       key={m.id}
-                      className="bg-white rounded-xl border border-slate-200 p-5 hover:border-indigo-200 hover:shadow-sm cursor-pointer group"
+                      href={`/material/${m.id}`}
+                      className="block bg-white rounded-xl border border-slate-200 p-5 hover:border-indigo-200 hover:shadow-sm cursor-pointer group"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 rounded-lg bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                          {m.photo_url
-                            ? <ImageIcon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400" />
-                            : <FileText  className="w-6 h-6 text-slate-400 group-hover:text-indigo-400" />
-                          }
+                        {/* Thumbnail */}
+                        <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                          {thumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={thumb} alt={m.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center group-hover:bg-indigo-50">
+                              <Icon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400" />
+                            </div>
+                          )}
                         </div>
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -195,13 +203,10 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.color}`}>
                                   {config.label}
                                 </span>
-                                {m.photo_url && (
-                                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                                    <ImageIcon className="w-3 h-3" /> photo
-                                  </span>
-                                )}
                               </div>
-                              <h3 className="font-semibold text-slate-900 text-sm">{m.title}</h3>
+                              <h3 className="font-semibold text-slate-900 text-sm group-hover:text-indigo-700">
+                                {m.title}
+                              </h3>
                             </div>
                             <span className="text-xs text-slate-400 flex-shrink-0">
                               {new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -213,7 +218,7 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
                             </p>
                           )}
                           {m.tags.length > 0 && (
-                            <div className="flex items-center gap-2 mt-3">
+                            <div className="flex items-center gap-2 mt-3 flex-wrap">
                               {m.tags.map((tag) => (
                                 <span key={tag} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
                                   {tag}
@@ -223,7 +228,7 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
                           )}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })
               )}
