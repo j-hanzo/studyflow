@@ -29,7 +29,9 @@ const TYPE_OPTIONS: { value: MaterialType; label: string; desc: string; icon: Re
   { value: "assignment", label: "Assignment",    desc: "Homework or project",      icon: ClipboardList },
 ];
 
-const MAX_FILE_MB = 15;
+const MAX_FILE_MB = 50;
+const CLAUDE_MAX_PX = 1568; // Claude vision sweet spot — plenty for text extraction
+const CLAUDE_MAX_B64_BYTES = 4_000_000; // stay under Vercel 4.5 MB body limit
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -115,8 +117,9 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
         const base64 = await fileToBase64(file!);
         body = { mode: "pdf", base64, mimeType: file!.type };
       } else {
-        const base64 = await fileToBase64(file!);
-        body = { mode: "image", base64, mimeType: file!.type };
+        // Compress image before sending — keeps original for storage upload
+        const { base64, mimeType } = await compressForClaude(file!);
+        body = { mode: "image", base64, mimeType };
       }
 
       const res = await fetch("/api/extract", {
@@ -196,6 +199,40 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
       reader.onerror = reject;
       reader.readAsDataURL(f);
     });
+  }
+
+  /**
+   * Resize + compress an image File so the resulting base64 stays under
+   * CLAUDE_MAX_B64_BYTES. Preserves aspect ratio. Returns a base64 string
+   * (no data-URL prefix) and the output mime type.
+   */
+  async function compressForClaude(f: File): Promise<{ base64: string; mimeType: string }> {
+    const bitmap = await createImageBitmap(f);
+    const { width: origW, height: origH } = bitmap;
+
+    // Scale down if either dimension exceeds CLAUDE_MAX_PX
+    const scale  = Math.min(1, CLAUDE_MAX_PX / Math.max(origW, origH));
+    const width  = Math.round(origW * scale);
+    const height = Math.round(origH * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width  = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    // Try quality 0.85 first, then drop to 0.65 if still too big
+    for (const quality of [0.85, 0.65, 0.45]) {
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+      const base64  = dataUrl.split(",")[1];
+      if (base64.length < CLAUDE_MAX_B64_BYTES) {
+        return { base64, mimeType: "image/jpeg" };
+      }
+    }
+    // Last resort — lowest quality
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.3);
+    return { base64: dataUrl.split(",")[1], mimeType: "image/jpeg" };
   }
 
   function removeTag(tag: string) {
