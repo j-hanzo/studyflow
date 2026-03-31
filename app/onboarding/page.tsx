@@ -18,7 +18,7 @@ export default function OnboardingPage() {
 
           <h1 className="text-xl font-bold text-slate-900 mb-2">Check your email</h1>
           <p className="text-sm text-slate-500 leading-relaxed mb-6">
-            We sent you a confirmation link. Click it to activate your account and get started with StudyFlow.
+            We sent you a confirmation link. Click it to activate your account and get started with Lumen.
           </p>
 
           <div className="space-y-2 text-left bg-slate-50 rounded-xl p-4 mb-6">

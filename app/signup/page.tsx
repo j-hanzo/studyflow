@@ -63,7 +63,7 @@ export default function SignupPage() {
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-          <p className="text-sm text-slate-500 mt-1">Get started with StudyFlow</p>
+          <p className="text-sm text-slate-500 mt-1">Get started with Lumen</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

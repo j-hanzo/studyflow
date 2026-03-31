@@ -41,7 +41,7 @@ export default function LoginPage() {
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
-          <p className="text-sm text-slate-500 mt-1">Sign in to StudyFlow</p>
+          <p className="text-sm text-slate-500 mt-1">Sign in to Lumen</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

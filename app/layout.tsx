@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StudyFlow — Smart Study Assistant",
+  title: "Lumen — AI Study Assistant",
   description: "AI-powered study management for students and parents",
 };
 

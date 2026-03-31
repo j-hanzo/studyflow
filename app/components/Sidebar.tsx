@@ -71,7 +71,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-slate-900">StudyFlow</span>
+          <span className="text-lg font-bold text-slate-900">Lumen</span>
         </div>
       </div>
 
