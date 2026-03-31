@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
+import AddAssignmentModal from "./AddAssignmentModal";
 import type { Profile, Class, Assignment, StudySession, Message } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
@@ -46,6 +47,7 @@ function formatDate(dateStr: string) {
 export default function StudentDashboard({ profile, classes, assignments, studySessions, messages }: Props) {
   const [sessions, setSessions] = useState(studySessions);
   const [showAddClass, setShowAddClass] = useState(false);
+  const [showAddAssignment, setShowAddAssignment] = useState(false);
   const supabase = createClient();
   const router = useRouter();
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
@@ -72,6 +74,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           studentId={profile.id}
           onClose={() => setShowAddClass(false)}
           onSaved={() => { setShowAddClass(false); router.refresh(); }}
+        />
+      )}
+      {showAddAssignment && (
+        <AddAssignmentModal
+          studentId={profile.id}
+          classes={classes}
+          onClose={() => setShowAddAssignment(false)}
+          onSaved={() => { setShowAddAssignment(false); router.refresh(); }}
         />
       )}
       <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
@@ -280,7 +290,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-base font-bold text-slate-900">Upcoming</h2>
-                  <Link href="/calendar" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">All</Link>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowAddAssignment(true)}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add
+                    </button>
+                    <Link href="/calendar" className="text-sm text-slate-400 hover:text-slate-600 font-medium">All</Link>
+                  </div>
                 </div>
 
                 {assignments.length === 0 ? (
