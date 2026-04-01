@@ -69,15 +69,46 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
   const [newTag, setNewTag]           = useState("");
   const [dueDate, setDueDate]         = useState("");
   const [error, setError]             = useState("");
+  const [converting, setConverting]   = useState(false);
 
   // ── File handling ──────────────────────────────────────────────
-  function handleFile(f: File) {
+  function isHeic(f: File) {
+    return (
+      f.type === "image/heic" ||
+      f.type === "image/heif" ||
+      /\.(heic|heif)$/i.test(f.name)
+    );
+  }
+
+  async function handleFile(f: File) {
     const mb = f.size / (1024 * 1024);
     if (mb > MAX_FILE_MB) {
       setError(`File too large (${mb.toFixed(1)} MB). Max ${MAX_FILE_MB} MB.`);
       return;
     }
     setError("");
+
+    // Convert HEIC/HEIF → JPEG so Canvas + Claude can process it
+    if (isHeic(f)) {
+      setConverting(true);
+      try {
+        const heic2any = (await import("heic2any")).default;
+        const blob = await heic2any({ blob: f, toType: "image/jpeg", quality: 0.92 });
+        const out = Array.isArray(blob) ? blob[0] : blob;
+        f = new File(
+          [out],
+          f.name.replace(/\.(heic|heif)$/i, ".jpg"),
+          { type: "image/jpeg" }
+        );
+      } catch {
+        setError("Could not convert HEIC file. Try saving it as JPG from your Photos app first.");
+        setConverting(false);
+        return;
+      } finally {
+        setConverting(false);
+      }
+    }
+
     setFile(f);
     if (f.type.startsWith("image/")) {
       setFilePreview(URL.createObjectURL(f));
@@ -96,6 +127,7 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
     if (f) handleFile(f);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function clearFile() {
@@ -415,11 +447,11 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
                             <p className="font-semibold text-slate-700 mb-1">
                               Drop a file here, or <span className="text-indigo-600">browse</span>
                             </p>
-                            <p className="text-xs text-slate-400">JPG, PNG, PDF · Max {MAX_FILE_MB} MB</p>
+                            <p className="text-xs text-slate-400">JPG, PNG, HEIC, PDF · Max {MAX_FILE_MB} MB</p>
                             <input
                               ref={fileInputRef}
                               type="file"
-                              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf"
                               onChange={handleFileInput}
                               className="hidden"
                             />
@@ -490,6 +522,13 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
                         <Sparkles className="w-4 h-4" />
                         Analyze with AI
                       </button>
+                    )}
+
+                    {converting && (
+                      <div className="mt-4 w-full flex items-center justify-center gap-2 bg-amber-50 text-amber-700 text-sm font-medium py-3 rounded-xl">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Converting HEIC to JPEG…
+                      </div>
                     )}
 
                     {step === "analyzing" && (
