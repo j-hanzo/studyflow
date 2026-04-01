@@ -42,6 +42,7 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
   const [tags, setTags]             = useState<string[]>(material.tags ?? []);
   const [classId, setClassId]       = useState(material.class_id);
   const [newTag, setNewTag]         = useState("");
+  const [newDueDate, setNewDueDate]  = useState("");
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -76,11 +77,27 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
       .eq("id", material.id);
     setSaving(false);
     if (err) { setError(err.message); return; }
+
+    // If assignment type and a new due date was entered, create calendar deadline
+    if (type === "assignment" && newDueDate && !linkedAssignment) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("assignments").insert({
+        student_id:  profile.id,
+        class_id:    classId,
+        title:       title.trim() || "Untitled",
+        type:        "assignment",
+        due_date:    newDueDate,
+        description: `material_ref:${material.id}`,
+      });
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     // If class changed, navigate to the new class page
     if (classId !== material.class_id) {
       router.push(`/class/${classId}`);
+    } else if (newDueDate) {
+      router.refresh(); // reload to show the linked assignment
     }
   }
 
@@ -249,6 +266,47 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
               />
             </div>
 
+            {/* Due date — shown for assignments, right under title */}
+            {type === "assignment" && (
+              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  {linkedAssignment ? (
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900">
+                        Due {new Date(linkedAssignment.due_date + "T00:00:00").toLocaleDateString("en-US", {
+                          weekday: "long", month: "long", day: "numeric",
+                        })}
+                      </p>
+                      <p className="text-xs text-amber-600 mt-0.5">Deadline on your calendar</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <p className="text-sm font-medium text-amber-800">Set a due date</p>
+                      <input
+                        type="date"
+                        value={newDueDate}
+                        min={new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setNewDueDate(e.target.value)}
+                        className="border border-amber-300 bg-white rounded-lg px-3 py-1.5 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                      {newDueDate && (
+                        <p className="text-xs text-amber-700 font-medium">Will be added to your calendar on save</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {linkedAssignment && (
+                  <Link
+                    href="/calendar"
+                    className="text-xs text-amber-700 font-semibold bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg flex-shrink-0"
+                  >
+                    View calendar →
+                  </Link>
+                )}
+              </div>
+            )}
+
             {/* Class — move to different class */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
@@ -303,43 +361,6 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
                 })}
               </div>
             </div>
-
-            {/* Due date — shown for assignments */}
-            {type === "assignment" && (
-              <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5" /> Due Date
-                </label>
-                {linkedAssignment ? (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">
-                        {new Date(linkedAssignment.due_date + "T00:00:00").toLocaleDateString("en-US", {
-                          weekday: "long", month: "long", day: "numeric",
-                        })}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">Deadline on your calendar</p>
-                    </div>
-                    <Link
-                      href="/calendar"
-                      className="text-xs text-indigo-600 font-medium bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg"
-                    >
-                      View calendar →
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs text-slate-400">No deadline set yet.</p>
-                    <Link
-                      href="/calendar"
-                      className="text-xs text-indigo-600 font-medium bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg"
-                    >
-                      + Add to calendar
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Extracted text / notes */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">

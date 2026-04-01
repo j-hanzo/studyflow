@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Camera, Bell, CheckCircle2, Clock, FlameIcon, Sparkles,
   TrendingUp, AlertCircle, ChevronRight, Plus,
+  StickyNote, FileText, ClipboardList,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
@@ -205,7 +206,24 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                     <div key={m.id} className="bg-white rounded-xl border-2 border-amber-200 p-4">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-900 text-sm truncate">{m.title}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-slate-900 text-sm truncate">{m.title}</p>
+                            {m.type === "notes" && (
+                              <span className="flex items-center gap-1 text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                <StickyNote className="w-3 h-3" /> Notes
+                              </span>
+                            )}
+                            {m.type === "handout" && (
+                              <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                <FileText className="w-3 h-3" /> Handout
+                              </span>
+                            )}
+                            {m.type === "assignment" && (
+                              <span className="flex items-center gap-1 text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                <ClipboardList className="w-3 h-3" /> Assignment
+                              </span>
+                            )}
+                          </div>
                           {currentClass && (
                             <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
                               <span className={`w-1.5 h-1.5 rounded-full ${currentClass.color}`} />
