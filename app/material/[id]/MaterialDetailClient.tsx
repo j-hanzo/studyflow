@@ -64,7 +64,8 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
     content !== (material.content_text ?? "") ||
     type !== material.type ||
     classId !== material.class_id ||
-    JSON.stringify(tags) !== JSON.stringify(material.tags ?? []);
+    JSON.stringify(tags) !== JSON.stringify(material.tags ?? []) ||
+    (type === "assignment" && !!newDueDate && !linkedAssignment);
 
   async function handleSave() {
     if (!title.trim()) { setError("Title is required"); return; }
