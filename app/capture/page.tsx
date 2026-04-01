@@ -16,31 +16,23 @@ export default async function CapturePage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Phase 1: profile
   const { data: profileData } = await db.from("profiles").select("*").eq("id", user.id).single();
   if (!profileData) redirect("/login");
   const profile = profileData as Profile;
 
-  const { data: allClassesData } = await db
-    .from("classes")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at");
-  const allClasses = (allClassesData ?? []) as Class[];
-
-  // Most recent 5 materials this student has added
-  const { data: recentData } = await db
-    .from("materials")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  const recentMaterials = (recentData ?? []) as Material[];
+  // Phase 2: parallel
+  const [allClassesResult, recentResult] = await Promise.all([
+    db.from("classes").select("*").eq("student_id", user.id).order("created_at"),
+    db.from("materials").select("*").eq("student_id", user.id)
+      .order("created_at", { ascending: false }).limit(5),
+  ]);
 
   return (
     <CaptureClient
       profile={profile}
-      allClasses={allClasses}
-      recentMaterials={recentMaterials}
+      allClasses={(allClassesResult.data ?? []) as Class[]}
+      recentMaterials={(recentResult.data ?? []) as Material[]}
       defaultClassId={classId}
     />
   );

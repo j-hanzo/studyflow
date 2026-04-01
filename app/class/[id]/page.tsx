@@ -12,47 +12,37 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Phase 1: profile
   const { data: profileData } = await db.from("profiles").select("*").eq("id", user.id).single();
   if (!profileData) redirect("/login");
   const profile = profileData as Profile;
 
-  // Fetch this class (verify ownership)
-  const { data: classData } = await db.from("classes").select("*").eq("id", id).eq("student_id", user.id).single();
-  if (!classData) notFound();
-  const cls = classData as Class;
+  // Phase 2: class verify + all classes + materials + assignments — all parallel
+  // (class ownership is confirmed by eq("student_id", user.id))
+  const [classResult, allClassesResult, materialsResult, assignmentsResult] = await Promise.all([
+    db.from("classes").select("*").eq("id", id).eq("student_id", user.id).single(),
+    db.from("classes").select("*").eq("student_id", user.id).order("created_at"),
+    db.from("materials").select("*").eq("class_id", id).order("created_at", { ascending: false }),
+    db.from("assignments").select("*").eq("class_id", id).order("due_date", { ascending: true }),
+  ]);
 
-  // Fetch all student's classes (for the assignment modal class selector)
-  const { data: allClassesData } = await db.from("classes").select("*").eq("student_id", user.id).order("created_at");
-  const allClasses = (allClassesData ?? []) as Class[];
+  if (!classResult.data) notFound();
 
-  // Fetch materials for this class
-  const { data: materialsData } = await db
-    .from("materials")
-    .select("*")
-    .eq("class_id", id)
-    .order("created_at", { ascending: false });
-  const materials = (materialsData ?? []) as Material[];
+  const cls         = classResult.data    as Class;
+  const allClasses  = (allClassesResult.data  ?? []) as Class[];
+  const materials   = (materialsResult.data   ?? []) as Material[];
+  const assignments = (assignmentsResult.data ?? []) as Assignment[];
 
-  // Generate signed URLs for materials that have a stored photo
+  // Phase 3: signed URLs for photo materials (already internally parallel)
   const signedUrls: Record<string, string> = {};
   await Promise.all(
     materials
       .filter((m) => m.photo_url)
       .map(async (m) => {
-        const { data } = await supabase.storage
-          .from("materials")
-          .createSignedUrl(m.photo_url!, 3600);
+        const { data } = await supabase.storage.from("materials").createSignedUrl(m.photo_url!, 3600);
         if (data?.signedUrl) signedUrls[m.id] = data.signedUrl;
       })
   );
-
-  // Fetch assignments for this class
-  const { data: assignmentsData } = await db
-    .from("assignments")
-    .select("*")
-    .eq("class_id", id)
-    .order("due_date", { ascending: true });
-  const assignments = (assignmentsData ?? []) as Assignment[];
 
   return (
     <ClassDetailClient

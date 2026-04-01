@@ -11,29 +11,22 @@ export default async function CalendarPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Phase 1: profile (needed to verify auth)
   const { data: profileData } = await db.from("profiles").select("*").eq("id", user.id).single();
   if (!profileData) redirect("/login");
   const profile = profileData as Profile;
 
-  const { data: allClassesData } = await db
-    .from("classes")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at");
-  const allClasses = (allClassesData ?? []) as Class[];
-
-  const { data: assignmentsData } = await db
-    .from("assignments")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("due_date", { ascending: true });
-  const assignments = (assignmentsData ?? []) as Assignment[];
+  // Phase 2: all remaining queries in parallel
+  const [allClassesResult, assignmentsResult] = await Promise.all([
+    db.from("classes").select("*").eq("student_id", user.id).order("created_at"),
+    db.from("assignments").select("*").eq("student_id", user.id).order("due_date", { ascending: true }),
+  ]);
 
   return (
     <CalendarClient
       profile={profile}
-      allClasses={allClasses}
-      assignments={assignments}
+      allClasses={(allClassesResult.data ?? []) as Class[]}
+      assignments={(assignmentsResult.data ?? []) as Assignment[]}
     />
   );
 }

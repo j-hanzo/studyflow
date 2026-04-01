@@ -12,53 +12,34 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profileData } = await db.from("profiles").select("*").eq("id", user.id).single();
-  if (!profileData) redirect("/login");
-  const profile = profileData as Profile;
+  // Phase 1: profile + material ownership check in parallel
+  const [profileResult, materialResult] = await Promise.all([
+    db.from("profiles").select("*").eq("id", user.id).single(),
+    db.from("materials").select("*").eq("id", id).eq("student_id", user.id).single(),
+  ]);
+  if (!profileResult.data) redirect("/login");
+  if (!materialResult.data) notFound();
 
-  // Fetch the material (verify student owns it)
-  const { data: materialData } = await db
-    .from("materials")
-    .select("*")
-    .eq("id", id)
-    .eq("student_id", user.id)
-    .single();
-  if (!materialData) notFound();
-  const material = materialData as Material;
+  const profile  = profileResult.data  as Profile;
+  const material = materialResult.data as Material;
 
-  // Fetch the class this material belongs to
-  const { data: classData } = await db
-    .from("classes")
-    .select("*")
-    .eq("id", material.class_id)
-    .single();
-  if (!classData) notFound();
-  const classInfo = classData as Class;
-
-  // All student classes (for sidebar)
-  const { data: allClassesData } = await db
-    .from("classes")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at");
-  const allClasses = (allClassesData ?? []) as Class[];
-
-  // Signed URL for the photo if one exists
-  let signedUrl: string | null = null;
-  if (material.photo_url) {
-    const { data } = await supabase.storage
-      .from("materials")
-      .createSignedUrl(material.photo_url, 3600);
-    signedUrl = data?.signedUrl ?? null;
-  }
+  // Phase 2: class info + all classes + signed URL in parallel
+  const [classResult, allClassesResult, signedUrlResult] = await Promise.all([
+    db.from("classes").select("*").eq("id", material.class_id).single(),
+    db.from("classes").select("*").eq("student_id", user.id).order("created_at"),
+    material.photo_url
+      ? supabase.storage.from("materials").createSignedUrl(material.photo_url, 3600)
+      : Promise.resolve({ data: null }),
+  ]);
+  if (!classResult.data) notFound();
 
   return (
     <MaterialDetailClient
       profile={profile}
-      allClasses={allClasses}
+      allClasses={(allClassesResult.data ?? []) as Class[]}
       material={material}
-      classInfo={classInfo}
-      signedUrl={signedUrl}
+      classInfo={classResult.data as Class}
+      signedUrl={signedUrlResult.data?.signedUrl ?? null}
     />
   );
 }
