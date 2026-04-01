@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/signup']
+  const publicPaths = ['/login', '/signup', '/api/reminders']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
   // Redirect unauthenticated users to login
