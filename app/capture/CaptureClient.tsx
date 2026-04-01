@@ -67,6 +67,7 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
   const [aiText, setAiText]           = useState("");
   const [aiTags, setAiTags]           = useState<string[]>([]);
   const [newTag, setNewTag]           = useState("");
+  const [dueDate, setDueDate]         = useState("");
   const [error, setError]             = useState("");
 
   // ── File handling ──────────────────────────────────────────────
@@ -167,20 +168,36 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertErr } = await (supabase as any).from("materials").insert({
-        student_id:   profile.id,
-        class_id:     classId,
-        title:        aiTitle.trim() || "Untitled",
-        type:         materialType,
-        content_text: aiText.trim() || null,
-        photo_url:    photoUrl,
-        tags:         aiTags,
-      });
+      const { data: newMaterial, error: insertErr } = await (supabase as any)
+        .from("materials")
+        .insert({
+          student_id:   profile.id,
+          class_id:     classId,
+          title:        aiTitle.trim() || "Untitled",
+          type:         materialType,
+          content_text: aiText.trim() || null,
+          photo_url:    photoUrl,
+          tags:         aiTags,
+        })
+        .select()
+        .single();
 
       if (insertErr) throw new Error(insertErr.message);
 
+      // If assignment type with a due date → also create a calendar deadline
+      if (materialType === "assignment" && dueDate && newMaterial) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).from("assignments").insert({
+          student_id:  profile.id,
+          class_id:    classId,
+          title:       aiTitle.trim() || "Untitled",
+          type:        "assignment",
+          due_date:    dueDate,
+          description: `material_ref:${newMaterial.id}`,
+        });
+      }
+
       setStep("done");
-      // Redirect to the class page after a short delay
       setTimeout(() => router.push(`/class/${classId}`), 1200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
@@ -317,7 +334,7 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
                         return (
                           <button
                             key={t.value}
-                            onClick={() => setMaterialType(t.value)}
+                            onClick={() => { setMaterialType(t.value); if (t.value !== "assignment") setDueDate(""); }}
                             className={`rounded-xl border-2 p-4 text-left transition-all ${
                               materialType === t.value
                                 ? "border-indigo-500 bg-indigo-50"
@@ -333,6 +350,29 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
                         );
                       })}
                     </div>
+
+                    {/* Due date — only shown for assignments */}
+                    {materialType === "assignment" && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                          Due date
+                          <span className="text-xs font-normal text-slate-400">(adds to calendar)</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={dueDate}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
+                        />
+                        {dueDate && (
+                          <p className="text-xs text-indigo-600 mt-2 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Will appear on your calendar and send you reminders
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Capture method tabs */}

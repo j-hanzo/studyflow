@@ -1,0 +1,31 @@
+name: Daily Assignment Reminders
+
+on:
+  schedule:
+    # Runs every day at 8:00 AM UTC (4 AM ET / 1 AM PT)
+    # Adjust the time to match your students' time zone
+    - cron: "0 8 * * *"
+  workflow_dispatch: # Allow manual runs from GitHub Actions UI
+
+jobs:
+  send-reminders:
+    name: Send reminder emails
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping reminders endpoint
+        run: |
+          RESPONSE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/reminders" \
+            -H "Authorization: Bearer ${{ secrets.REMINDER_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          echo "HTTP status: $RESPONSE"
+          echo "Response body:"
+          cat /tmp/response.json
+
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "Reminders endpoint returned $RESPONSE — failing the job"
+            exit 1
+          fi

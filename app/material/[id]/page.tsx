@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import MaterialDetailClient from "./MaterialDetailClient";
-import type { Profile, Class, Material } from "@/lib/supabase/types";
+import type { Profile, Class, Material, Assignment } from "@/lib/supabase/types";
 
 export default async function MaterialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,15 +23,21 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
   const profile  = profileResult.data  as Profile;
   const material = materialResult.data as Material;
 
-  // Phase 2: class info + all classes + signed URL in parallel
-  const [classResult, allClassesResult, signedUrlResult] = await Promise.all([
+  // Phase 2: class info + all classes + signed URL + linked assignment in parallel
+  const [classResult, allClassesResult, signedUrlResult, linkedAssignmentResult] = await Promise.all([
     db.from("classes").select("*").eq("id", material.class_id).single(),
     db.from("classes").select("*").eq("student_id", user.id).order("created_at"),
     material.photo_url
       ? supabase.storage.from("materials").createSignedUrl(material.photo_url, 3600)
       : Promise.resolve({ data: null }),
+    db.from("assignments").select("*")
+      .eq("student_id", user.id)
+      .eq("description", `material_ref:${id}`)
+      .limit(1),
   ]);
   if (!classResult.data) notFound();
+
+  const linkedAssignment = (linkedAssignmentResult.data?.[0] ?? null) as Assignment | null;
 
   return (
     <MaterialDetailClient
@@ -40,6 +46,7 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
       material={material}
       classInfo={classResult.data as Class}
       signedUrl={signedUrlResult.data?.signedUrl ?? null}
+      linkedAssignment={linkedAssignment}
     />
   );
 }
