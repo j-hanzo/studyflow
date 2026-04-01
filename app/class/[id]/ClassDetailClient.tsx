@@ -2,6 +2,7 @@
 
 import Sidebar from "../../components/Sidebar";
 import AddAssignmentModal from "../../components/AddAssignmentModal";
+import AddClassModal from "../../components/AddClassModal";
 import {
   FileText, Image as ImageIcon, Camera, Sparkles, Clock,
   CheckCircle2, AlertCircle, ChevronRight, Search, Plus, BookOpen,
@@ -40,6 +41,7 @@ function formatDate(dateStr: string) {
 
 export default function ClassDetailClient({ profile, cls, allClasses, materials, signedUrls, assignments }: Props) {
   const [showAddAssignment, setShowAddAssignment] = useState(false);
+  const [showAddClass, setShowAddClass] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "notes" | "assignment" | "handout">("all");
   const [search, setSearch] = useState("");
   const [localAssignments, setLocalAssignments] = useState(assignments);
@@ -81,7 +83,14 @@ export default function ClassDetailClient({ profile, cls, allClasses, materials,
         />
       )}
 
-      <Sidebar mode="student" classes={allClasses} profile={profile} />
+      {showAddClass && (
+        <AddClassModal
+          studentId={profile.id}
+          onClose={() => setShowAddClass(false)}
+          onSaved={() => { setShowAddClass(false); router.refresh(); }}
+        />
+      )}
+      <Sidebar mode="student" classes={allClasses} profile={profile} onAddClass={() => setShowAddClass(true)} />
 
       <main className="flex-1 overflow-auto">
         {/* Header */}

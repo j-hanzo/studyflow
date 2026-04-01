@@ -8,7 +8,7 @@ import {
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
 import AddAssignmentModal from "./AddAssignmentModal";
-import type { Profile, Class, Assignment, StudySession, Message } from "@/lib/supabase/types";
+import type { Profile, Class, Assignment, StudySession, Message, Material } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ interface Props {
   assignments: (Assignment & { classes: { name: string; color: string } | null })[];
   studySessions: StudySession[];
   messages: (Message & { sender: { full_name: string | null } | null })[];
+  recentMaterials: Material[];
 }
 
 const colorMap: Record<string, string> = {
@@ -44,7 +45,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-export default function StudentDashboard({ profile, classes, assignments, studySessions, messages }: Props) {
+export default function StudentDashboard({ profile, classes, assignments, studySessions, messages, recentMaterials }: Props) {
   const [sessions, setSessions] = useState(studySessions);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
@@ -57,6 +58,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
   const nextExam = assignments.find((a) => a.type === "exam");
   const avgProgress = classes.length > 0 ? Math.round(Math.random() * 30 + 55) : 0; // placeholder until we track per-class progress
+
+  const [inbox, setInbox] = useState(recentMaterials);
+
+  async function moveToClass(materialId: string, classId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("materials").update({ class_id: classId }).eq("id", materialId);
+    setInbox((prev) => prev.filter((m) => m.id !== materialId));
+  }
 
   async function toggleSession(id: string, completed: boolean) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -176,6 +185,64 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               </p>
             </div>
           </div>
+
+          {/* ── Recently uploaded inbox ── */}
+          {inbox.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900">Recently Added</h2>
+                  <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
+                    {inbox.length} to file
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Tap a class to confirm where each note belongs</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {inbox.map((m) => {
+                  const currentClass = classes.find((c) => c.id === m.class_id);
+                  return (
+                    <div key={m.id} className="bg-white rounded-xl border-2 border-amber-200 p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{m.title}</p>
+                          {currentClass && (
+                            <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                              <span className={`w-1.5 h-1.5 rounded-full ${currentClass.color}`} />
+                              Filed under {currentClass.name} — move if wrong
+                            </p>
+                          )}
+                        </div>
+                        <Link
+                          href={`/material/${m.id}`}
+                          className="text-xs text-slate-400 hover:text-indigo-600 flex-shrink-0"
+                        >
+                          Edit →
+                        </Link>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {classes.map((cls) => (
+                          <button
+                            key={cls.id}
+                            onClick={() => moveToClass(m.id, cls.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all ${
+                              m.class_id === cls.id
+                                ? `border-transparent ${cls.color} text-white`
+                                : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${m.class_id === cls.id ? "bg-white/70" : cls.color}`} />
+                            {cls.name}
+                            {m.class_id === cls.id && " ✓"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-6">
             <div className="col-span-2 space-y-6">

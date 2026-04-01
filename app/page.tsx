@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import StudentDashboard from "./components/StudentDashboard";
 import ParentDashboard from "./components/ParentDashboard";
-import type { Profile, Class, Assignment, Message, StudySession } from "@/lib/supabase/types";
+import type { Profile, Class, Assignment, Message, StudySession, Material } from "@/lib/supabase/types";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -57,6 +57,12 @@ export default async function Home() {
     .select("*, sender:profiles!sender_id(full_name)").eq("recipient_id", user.id)
     .eq("read", false).order("created_at", { ascending: false }).limit(3);
 
+  // Materials added in the last 48 hours — shown on dashboard for class confirmation
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const { data: recentMaterialsData } = await db.from("materials").select("*")
+    .eq("student_id", user.id).gte("created_at", cutoff)
+    .order("created_at", { ascending: false }).limit(10);
+
   return (
     <StudentDashboard
       profile={profile}
@@ -64,6 +70,7 @@ export default async function Home() {
       assignments={(assignmentsData ?? []) as (Assignment & { classes: { name: string; color: string } | null })[]}
       studySessions={(studySessionsData ?? []) as StudySession[]}
       messages={(messagesData ?? []) as (Message & { sender: { full_name: string | null } | null })[]}
+      recentMaterials={(recentMaterialsData ?? []) as Material[]}
     />
   );
 }

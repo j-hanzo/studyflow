@@ -31,21 +31,23 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
   const router = useRouter();
   const supabase = createClient();
 
-  const [title, setTitle]         = useState(material.title);
-  const [content, setContent]     = useState(material.content_text ?? "");
-  const [type, setType]           = useState<MaterialType>(material.type);
-  const [tags, setTags]           = useState<string[]>(material.tags ?? []);
-  const [newTag, setNewTag]       = useState("");
-  const [saving, setSaving]       = useState(false);
-  const [deleting, setDeleting]   = useState(false);
+  const [title, setTitle]           = useState(material.title);
+  const [content, setContent]       = useState(material.content_text ?? "");
+  const [type, setType]             = useState<MaterialType>(material.type);
+  const [tags, setTags]             = useState<string[]>(material.tags ?? []);
+  const [classId, setClassId]       = useState(material.class_id);
+  const [newTag, setNewTag]         = useState("");
+  const [saving, setSaving]         = useState(false);
+  const [deleting, setDeleting]     = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [error, setError]         = useState("");
-  const [saved, setSaved]         = useState(false);
+  const [error, setError]           = useState("");
+  const [saved, setSaved]           = useState(false);
 
   const dirty =
     title !== material.title ||
     content !== (material.content_text ?? "") ||
     type !== material.type ||
+    classId !== material.class_id ||
     JSON.stringify(tags) !== JSON.stringify(material.tags ?? []);
 
   async function handleSave() {
@@ -55,12 +57,16 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: err } = await (supabase as any)
       .from("materials")
-      .update({ title: title.trim(), content_text: content.trim() || null, type, tags })
+      .update({ title: title.trim(), content_text: content.trim() || null, type, tags, class_id: classId })
       .eq("id", material.id);
     setSaving(false);
     if (err) { setError(err.message); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    // If class changed, navigate to the new class page
+    if (classId !== material.class_id) {
+      router.push(`/class/${classId}`);
+    }
   }
 
   async function handleDelete() {
@@ -186,6 +192,35 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
                 className="w-full text-lg font-semibold text-slate-900 border-0 focus:outline-none focus:ring-0 p-0 placeholder:text-slate-300"
                 placeholder="Add a title…"
               />
+            </div>
+
+            {/* Class — move to different class */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                Class
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {allClasses.map((cls) => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setClassId(cls.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                      classId === cls.id
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${cls.color}`} />
+                    {cls.name}
+                  </button>
+                ))}
+              </div>
+              {classId !== material.class_id && (
+                <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Saving will move this material to {allClasses.find(c => c.id === classId)?.name ?? "the new class"}
+                </p>
+              )}
             </div>
 
             {/* Type */}
