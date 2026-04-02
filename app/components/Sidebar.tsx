@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen, Calendar, Camera, Home, MessageCircle,
-  Bell, Users, GraduationCap, ChevronRight, Sparkles, LogOut,
+  Bell, Users, GraduationCap, ChevronRight, Sparkles, LogOut, FlipHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,7 @@ const studentNav = [
   { href: "/capture", icon: Camera, label: "Capture" },
   { href: "/calendar", icon: Calendar, label: "Calendar" },
   { href: "/tutor", icon: Sparkles, label: "AI Tutor" },
+  { href: "/practice", icon: FlipHorizontal, label: "Flashcards" },
   { href: "/messages", icon: MessageCircle, label: "Messages" },
 ];
 
