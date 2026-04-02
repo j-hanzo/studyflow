@@ -59,13 +59,17 @@ export async function POST(req: NextRequest) {
 
   // ── Group by student ──────────────────────────────────────────────
   const byStudent = new Map<string, { name: string; email?: string; items: typeof assignments }>();
-  const studentIds = [...new Set(assignments.map((a) => a.student_id as string))];
 
-  // Fetch auth emails via service role
-  const { data: users } = await db.auth.admin.listUsers();
-  const emailMap = new Map<string, string>();
-  for (const u of users?.users ?? []) {
-    if (u.email) emailMap.set(u.id, u.email);
+  // Fetch auth emails via service role (admin API)
+  let emailMap = new Map<string, string>();
+  try {
+    const { data: usersData } = await db.auth.admin.listUsers({ perPage: 1000 });
+    for (const u of usersData?.users ?? []) {
+      if (u.email) emailMap.set(u.id, u.email);
+    }
+  } catch (e) {
+    console.error("reminders: failed to list users", e);
+    // Continue — emails just won't be sent if we can't get addresses
   }
 
   for (const a of assignments) {
@@ -165,8 +169,9 @@ export async function POST(req: NextRequest) {
 </html>`;
 
     try {
+      const fromAddress = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
       await resend.emails.send({
-        from: "Lumen <reminders@lumen.study>",
+        from: fromAddress.includes("<") ? fromAddress : `Lumen <${fromAddress}>`,
         to:   student.email,
         subject: `📚 You have ${student.items.length} assignment${student.items.length > 1 ? "s" : ""} due soon`,
         html,
