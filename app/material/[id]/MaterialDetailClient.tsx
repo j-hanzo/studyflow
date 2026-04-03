@@ -326,14 +326,36 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
         <div className="px-8 py-6 max-w-3xl">
           <div className="space-y-5">
 
-            {/* Photo (if any) */}
+            {/* Original file (photo or PDF) */}
             {signedUrl && (
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Original Photo</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    {material.photo_url?.toLowerCase().endsWith(".pdf") ? "Original PDF" : "Original Photo"}
+                  </span>
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={signedUrl} alt={material.title} className="w-full max-h-96 object-contain bg-slate-50" />
+                {material.photo_url?.toLowerCase().endsWith(".pdf") ? (
+                  <a
+                    href={signedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-5 px-6 py-8 bg-slate-50 hover:bg-slate-100 transition-colors group"
+                  >
+                    <div className="w-16 h-20 rounded-lg bg-rose-100 border-2 border-rose-200 flex flex-col items-center justify-center flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
+                      <FileText className="w-7 h-7 text-rose-500 mb-1" />
+                      <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">PDF</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                        {material.title}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Click to open PDF in a new tab</p>
+                    </div>
+                  </a>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={signedUrl} alt={material.title} className="w-full max-h-96 object-contain bg-slate-50" />
+                )}
               </div>
             )}
 
