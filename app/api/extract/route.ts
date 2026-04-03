@@ -33,7 +33,7 @@ Schema: { "title": string, "text": string, "tags": string[] }
       const mediaType = body.mimeType as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
       message = await client.messages.create({
         model: "claude-haiku-4-5",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: [
           {
@@ -52,10 +52,10 @@ Schema: { "title": string, "text": string, "tags": string[] }
         ],
       });
     } else if (body.mode === "pdf") {
-      // PDF document
+      // PDF document — higher token limit since PDFs can be long
       message = await client.messages.create({
         model: "claude-haiku-4-5",
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [
           {
@@ -67,7 +67,7 @@ Schema: { "title": string, "text": string, "tags": string[] }
               } as Anthropic.DocumentBlockParam,
               {
                 type: "text",
-                text: "Summarize and organize the key content from this document. Return JSON only.",
+                text: "Summarize and organize the key concepts and important information from this document into the text field. Do NOT transcribe every word — extract the most useful study content. Return JSON only.",
               },
             ],
           },
@@ -77,7 +77,7 @@ Schema: { "title": string, "text": string, "tags": string[] }
       // Plain text paste
       message = await client.messages.create({
         model: "claude-haiku-4-5",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: systemPrompt,
         messages: [
           {
