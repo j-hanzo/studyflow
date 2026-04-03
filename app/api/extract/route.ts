@@ -52,10 +52,10 @@ Schema: { "title": string, "text": string, "tags": string[] }
         ],
       });
     } else if (body.mode === "pdf") {
-      // PDF document — higher token limit since PDFs can be long
+      // PDF document — Sonnet for accuracy, 8192 tokens for verbatim full-text extraction
       message = await client.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 4096,
+        model: "claude-sonnet-4-5",
+        max_tokens: 8192,
         system: systemPrompt,
         messages: [
           {
@@ -67,7 +67,7 @@ Schema: { "title": string, "text": string, "tags": string[] }
               } as Anthropic.DocumentBlockParam,
               {
                 type: "text",
-                text: "Summarize and organize the key concepts and important information from this document into the text field. Do NOT transcribe every word — extract the most useful study content. Return JSON only.",
+                text: "Extract ALL text from this document verbatim, preserving structure, headings, bullet points, and formatting. Include everything — do not summarize or skip any content. Return JSON only.",
               },
             ],
           },
