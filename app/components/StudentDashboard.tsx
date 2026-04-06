@@ -11,7 +11,7 @@ import AddClassModal from "./AddClassModal";
 import AddAssignmentModal from "./AddAssignmentModal";
 import type { Profile, Class, Assignment, StudySession, Message, Material } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -31,6 +31,40 @@ const colorMap: Record<string, string> = {
   "bg-violet-500": "bg-violet-500",
   "bg-blue-500": "bg-blue-500",
 };
+
+const SESSION_TYPES = [
+  { value: "study",      label: "Study",      dot: "bg-teal-400" },
+  { value: "exam",       label: "Exam",       dot: "bg-rose-500" },
+  { value: "quiz",       label: "Quiz",       dot: "bg-amber-400" },
+  { value: "assignment", label: "Assignment", dot: "bg-indigo-400" },
+] as const;
+type SessionType = typeof SESSION_TYPES[number]["value"];
+
+function sessionBlockClasses(type: string, completed: boolean) {
+  if (completed) return "bg-emerald-50 border-emerald-200 opacity-60";
+  switch (type) {
+    case "exam":       return "bg-rose-100 border-rose-300 hover:bg-rose-200";
+    case "quiz":       return "bg-amber-100 border-amber-300 hover:bg-amber-200";
+    case "assignment": return "bg-indigo-100 border-indigo-300 hover:bg-indigo-200";
+    default:           return "bg-teal-100 border-teal-300 hover:bg-teal-200";
+  }
+}
+function sessionTextClass(type: string) {
+  switch (type) {
+    case "exam":       return "text-rose-800";
+    case "quiz":       return "text-amber-800";
+    case "assignment": return "text-indigo-800";
+    default:           return "text-teal-800";
+  }
+}
+function sessionSubTextClass(type: string) {
+  switch (type) {
+    case "exam":       return "text-rose-500";
+    case "quiz":       return "text-amber-500";
+    case "assignment": return "text-indigo-500";
+    default:           return "text-teal-500";
+  }
+}
 
 function daysUntil(dateStr: string) {
   const today = new Date();
@@ -62,6 +96,69 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     }
   }, []);
 
+  // Keep sessions ref in sync for use inside drag closure
+  useEffect(() => { sessionsRef.current = sessions; }, [sessions]);
+
+  // Window-level drag handlers (set up once)
+  useEffect(() => {
+    const SLOT_PX = 48; // px per 30-min slot — mirrors SLOT_H
+    const T_START = 7;  // timeline start hour
+
+    const onMove = (e: MouseEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const delta = e.pageY - d.startY;
+      if (Math.abs(delta) > 4) d.moved = true;
+      const maxTop = 15 * 2 * SLOT_PX - SLOT_PX; // (22-7)*2 slots - 1
+      d.currentTop = Math.max(0, Math.min(d.origTop + delta, maxTop));
+      if (d.moved) setDragTop({ sessionId: d.sessionId, top: d.currentTop });
+    };
+
+    const onUp = () => {
+      const d = dragRef.current;
+      if (!d) return;
+      dragRef.current = null;
+
+      if (d.moved) {
+        // Snap to nearest 15-min mark
+        const totalMins = T_START * 60 + (d.currentTop / SLOT_PX) * 30;
+        const snapped   = Math.round(totalMins / 15) * 15;
+        const h = Math.floor(snapped / 60);
+        const m = snapped % 60;
+        const newTime = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (createClient() as any).from("study_sessions").update({ start_time: newTime }).eq("id", d.sessionId);
+        setSessions((prev) => prev.map((s) =>
+          s.id === d.sessionId ? { ...s, start_time: newTime + ":00" } : s
+        ));
+        setDragTop(null);
+      } else {
+        setDragTop(null);
+        // Treat as a click — open edit modal
+        const session = sessionsRef.current.find((s) => s.id === d.sessionId);
+        if (session) {
+          setPopover({
+            open: true,
+            sessionId: session.id,
+            title: session.title,
+            date: session.scheduled_date,
+            startTime: session.start_time?.slice(0, 5) ?? "09:00",
+            durationMinutes: session.duration_minutes,
+            completed: session.completed,
+            type: (session.type as SessionType) ?? "study",
+          });
+        }
+      }
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup",   onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup",   onUp);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Mini calendar state
   const todayStr = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -71,6 +168,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const supabase = createClient();
   const router = useRouter();
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
+
+  // ── Drag-to-reschedule ───────────────────────────────────────────
+  const dragRef = useRef<{
+    sessionId: string; startY: number; origTop: number;
+    currentTop: number; moved: boolean;
+  } | null>(null);
+  const sessionsRef = useRef(sessions);
+  const [dragTop, setDragTop] = useState<{ sessionId: string; top: number } | null>(null);
 
   // Mini calendar computed values
   const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -109,23 +214,25 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     open: boolean;
     sessionId: string | null;
     title: string;
+    type: SessionType;
     date: string;
     startTime: string;
     durationMinutes: number;
     completed: boolean;
   }
   const [popover, setPopover] = useState<SessionPopover>({
-    open: false, sessionId: null, title: "", date: todayStr, startTime: "09:00", durationMinutes: 60, completed: false,
+    open: false, sessionId: null, title: "", type: "study", date: todayStr, startTime: "09:00", durationMinutes: 60, completed: false,
   });
 
   function openPopoverNew(slotTime: string) {
-    setPopover({ open: true, sessionId: null, title: "", date: selectedDate, startTime: slotTime, durationMinutes: 60, completed: false });
+    setPopover({ open: true, sessionId: null, title: "", type: "study", date: selectedDate, startTime: slotTime, durationMinutes: 60, completed: false });
   }
   function openPopoverEdit(session: typeof sessions[number]) {
     setPopover({
       open: true,
       sessionId: session.id,
       title: session.title,
+      type: (session.type as SessionType) ?? "study",
       date: session.scheduled_date,
       startTime: session.start_time?.slice(0, 5) ?? "09:00",
       durationMinutes: session.duration_minutes,
@@ -138,6 +245,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from("study_sessions").update({
         title: popover.title,
+        type: popover.type,
         scheduled_date: popover.date,
         start_time: popover.startTime,
         duration_minutes: popover.durationMinutes,
@@ -145,7 +253,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       }).eq("id", popover.sessionId);
       setSessions((prev) => prev.map((s) =>
         s.id === popover.sessionId
-          ? { ...s, title: popover.title, scheduled_date: popover.date, start_time: popover.startTime + ":00", duration_minutes: popover.durationMinutes, completed: popover.completed }
+          ? { ...s, title: popover.title, type: popover.type, scheduled_date: popover.date, start_time: popover.startTime + ":00", duration_minutes: popover.durationMinutes, completed: popover.completed }
           : s
       ));
     } else {
@@ -153,6 +261,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       const { data } = await (supabase as any).from("study_sessions").insert({
         student_id: profile.id,
         title: popover.title,
+        type: popover.type,
         scheduled_date: popover.date,
         start_time: popover.startTime,
         duration_minutes: popover.durationMinutes,
@@ -759,7 +868,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               {timeSlots.map((slot, i) => (
                 <div
                   key={i}
-                  onClick={() => openPopoverNew(slot.timeStr)}
+                  onClick={() => { if (!dragRef.current?.moved) openPopoverNew(slot.timeStr); }}
                   className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/30 cursor-pointer transition-colors flex items-start"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
@@ -771,27 +880,33 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
               {/* Session blocks */}
               {selectedDateSessions.map((s) => {
-                const top = slotTop(s.start_time ?? "09:00");
-                const height = slotHeight(s.duration_minutes);
+                const origTop = slotTop(s.start_time ?? "09:00");
+                const top     = dragTop?.sessionId === s.id ? dragTop.top : origTop;
+                const height  = slotHeight(s.duration_minutes);
+                const isDragging = dragTop?.sessionId === s.id;
+                const sType   = (s.type as SessionType) ?? "study";
                 return (
                   <div
                     key={s.id}
-                    onClick={(e) => { e.stopPropagation(); openPopoverEdit(s); }}
-                    className={`absolute left-12 right-2 rounded-lg px-2 py-1 cursor-pointer border transition-all hover:shadow-sm
-                      ${s.completed
-                        ? "bg-emerald-50 border-emerald-200 opacity-60"
-                        : "bg-indigo-100 border-indigo-200 hover:bg-indigo-200"
-                      }`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      dragRef.current = { sessionId: s.id, startY: e.pageY, origTop, currentTop: origTop, moved: false };
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`absolute left-12 right-2 rounded-lg px-2 py-1 border select-none transition-shadow
+                      ${isDragging ? "shadow-lg cursor-grabbing z-20 opacity-90" : "cursor-grab hover:shadow-sm"}
+                      ${sessionBlockClasses(sType, s.completed)}`}
                     style={{ top: top + 1, height: height - 2 }}
                   >
-                    <p className="text-[10px] font-semibold text-indigo-800 truncate leading-tight">{s.title}</p>
+                    <p className={`text-[10px] font-semibold truncate leading-tight ${sessionTextClass(sType)}`}>{s.title}</p>
                     {height >= 36 && (
-                      <p className="text-[9px] text-indigo-500 mt-0.5">
+                      <p className={`text-[9px] mt-0.5 ${sessionSubTextClass(sType)}`}>
                         {s.start_time?.slice(0, 5) ?? "09:00"} · {s.duration_minutes}m
                       </p>
                     )}
                     {s.completed && height >= 36 && (
-                      <p className="text-[9px] text-emerald-600 font-semibold">Done</p>
+                      <p className="text-[9px] text-emerald-600 font-semibold">Done ✓</p>
                     )}
                   </div>
                 );
@@ -830,6 +945,28 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             <div className="space-y-3">
+              {/* Type selector */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1.5">Type</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {SESSION_TYPES.map((t) => {
+                    const active = popover.type === t.value;
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setPopover((p) => ({ ...p, type: t.value }))}
+                        className={`flex flex-col items-center gap-1 py-2 rounded-xl border text-[11px] font-semibold transition-all
+                          ${active ? "border-slate-300 bg-slate-900 text-white shadow-sm" : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
+                      >
+                        <span className={`w-2.5 h-2.5 rounded-full ${t.dot}`} />
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label className="text-xs font-semibold text-slate-600 block mb-1">Title</label>

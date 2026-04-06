@@ -141,6 +141,7 @@ export interface Database {
           student_id: string
           assignment_id: string | null
           title: string
+          type: string
           scheduled_date: string
           start_time: string | null
           duration_minutes: number
@@ -151,6 +152,7 @@ export interface Database {
           student_id: string
           assignment_id?: string | null
           title: string
+          type?: string
           scheduled_date: string
           start_time?: string | null
           duration_minutes?: number
@@ -158,6 +160,7 @@ export interface Database {
         }
         Update: {
           title?: string
+          type?: string
           scheduled_date?: string
           start_time?: string | null
           duration_minutes?: number

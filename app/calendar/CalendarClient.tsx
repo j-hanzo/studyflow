@@ -135,6 +135,9 @@ export default function CalendarClient({ profile, allClasses, assignments, initi
         sessions: { assignment_id: string | null; title: string; scheduled_date: string; start_time?: string; duration_minutes: number }[];
       };
 
+      // Build a lookup so we can derive session type from assignment type
+      const assignmentTypeById = new Map(upcomingForPlan.map((a) => [a.id, a.type]));
+
       if (!generated?.length) throw new Error("No sessions generated");
 
       // Delete existing incomplete sessions before inserting fresh plan
@@ -146,15 +149,19 @@ export default function CalendarClient({ profile, allClasses, assignments, initi
         .eq("completed", false);
 
       // Insert new sessions
-      const toInsert = generated.map((s) => ({
-        student_id:       profile.id,
-        assignment_id:    s.assignment_id ?? null,
-        title:            s.title,
-        scheduled_date:   s.scheduled_date,
-        start_time:       s.start_time ?? "16:00",
-        duration_minutes: s.duration_minutes,
-        completed:        false,
-      }));
+      const toInsert = generated.map((s) => {
+        const aType = s.assignment_id ? (assignmentTypeById.get(s.assignment_id) ?? "study") : "study";
+        return {
+          student_id:       profile.id,
+          assignment_id:    s.assignment_id ?? null,
+          title:            s.title,
+          type:             aType, // inherit from linked assignment
+          scheduled_date:   s.scheduled_date,
+          start_time:       s.start_time ?? "16:00",
+          duration_minutes: s.duration_minutes,
+          completed:        false,
+        };
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: inserted } = await (supabase as any)
