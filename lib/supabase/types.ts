@@ -142,6 +142,7 @@ export interface Database {
           assignment_id: string | null
           title: string
           scheduled_date: string
+          start_time: string | null
           duration_minutes: number
           completed: boolean
           created_at: string
@@ -151,12 +152,14 @@ export interface Database {
           assignment_id?: string | null
           title: string
           scheduled_date: string
+          start_time?: string | null
           duration_minutes?: number
           completed?: boolean
         }
         Update: {
           title?: string
           scheduled_date?: string
+          start_time?: string | null
           duration_minutes?: number
           completed?: boolean
         }

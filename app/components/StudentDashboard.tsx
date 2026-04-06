@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   Camera, Bell, CheckCircle2, Clock, Sparkles,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
-  CalendarDays, X,
+  CalendarDays, X, Trash2,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
@@ -95,6 +95,90 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   function nextMonth() {
     if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
     else setViewMonth((m) => m + 1);
+  }
+
+  // ── Session popover ──────────────────────────────────────────────
+  interface SessionPopover {
+    open: boolean;
+    sessionId: string | null;
+    title: string;
+    date: string;
+    startTime: string;
+    durationMinutes: number;
+  }
+  const [popover, setPopover] = useState<SessionPopover>({
+    open: false, sessionId: null, title: "", date: todayStr, startTime: "09:00", durationMinutes: 60,
+  });
+
+  function openPopoverNew(slotTime: string) {
+    setPopover({ open: true, sessionId: null, title: "", date: selectedDate, startTime: slotTime, durationMinutes: 60 });
+  }
+  function openPopoverEdit(session: typeof sessions[number]) {
+    setPopover({
+      open: true,
+      sessionId: session.id,
+      title: session.title,
+      date: session.scheduled_date,
+      startTime: session.start_time?.slice(0, 5) ?? "09:00",
+      durationMinutes: session.duration_minutes,
+    });
+  }
+  async function saveSession() {
+    if (!popover.title.trim()) return;
+    if (popover.sessionId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("study_sessions").update({
+        title: popover.title,
+        scheduled_date: popover.date,
+        start_time: popover.startTime,
+        duration_minutes: popover.durationMinutes,
+      }).eq("id", popover.sessionId);
+      setSessions((prev) => prev.map((s) =>
+        s.id === popover.sessionId
+          ? { ...s, title: popover.title, scheduled_date: popover.date, start_time: popover.startTime + ":00", duration_minutes: popover.durationMinutes }
+          : s
+      ));
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).from("study_sessions").insert({
+        student_id: profile.id,
+        title: popover.title,
+        scheduled_date: popover.date,
+        start_time: popover.startTime,
+        duration_minutes: popover.durationMinutes,
+        completed: false,
+      }).select().single();
+      if (data) setSessions((prev) => [...prev, data]);
+    }
+    setPopover((p) => ({ ...p, open: false }));
+  }
+  async function deleteSession() {
+    if (!popover.sessionId) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("study_sessions").delete().eq("id", popover.sessionId);
+    setSessions((prev) => prev.filter((s) => s.id !== popover.sessionId));
+    setPopover((p) => ({ ...p, open: false }));
+  }
+
+  // ── Timeline helpers ─────────────────────────────────────────────
+  const TIMELINE_START = 7;  // 7 AM
+  const TIMELINE_END   = 22; // 10 PM
+  const SLOT_H         = 48; // px per 30-min slot
+  const timeSlots = Array.from({ length: (TIMELINE_END - TIMELINE_START) * 2 }, (_, i) => {
+    const totalMins = TIMELINE_START * 60 + i * 30;
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    const label = m === 0
+      ? `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`
+      : "";
+    return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
+  });
+  function slotTop(startTime: string): number {
+    const [h, m] = startTime.split(":").map(Number);
+    return ((h - TIMELINE_START) * 60 + (m || 0)) / 30 * SLOT_H;
+  }
+  function slotHeight(mins: number): number {
+    return Math.max(mins / 30 * SLOT_H, SLOT_H * 0.6);
   }
 
   const [inbox, setInbox] = useState(recentMaterials);
@@ -621,39 +705,81 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
           </div>
 
-          {/* Selected date events */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {selectedDate === todayStr ? "Today" : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-            </p>
-            {selectedDateAssignments.length === 0 && selectedDateSessions.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">Nothing scheduled</p>
-            ) : (
-              <div className="space-y-2">
+          {/* Daily timeline */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Day header */}
+            <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100 flex-shrink-0 sticky top-0 bg-white z-10">
+              <p className="text-xs font-semibold text-slate-700">
+                {selectedDate === todayStr
+                  ? "Today"
+                  : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              </p>
+              <button
+                onClick={() => openPopoverNew("09:00")}
+                className="text-[10px] text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-0.5"
+              >
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
+
+            {/* Assignments due banner */}
+            {selectedDateAssignments.length > 0 && (
+              <div className="px-4 py-2 border-b border-amber-100 bg-amber-50 space-y-1 flex-shrink-0">
                 {selectedDateAssignments.map((a) => (
-                  <div key={a.id} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-300"}`} />
-                      <span className="text-[10px] font-medium text-slate-500 truncate">{a.classes?.name}</span>
-                      <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${a.type === "exam" ? "bg-rose-100 text-rose-600" : a.type === "quiz" ? "bg-violet-100 text-violet-600" : "bg-blue-100 text-blue-600"}`}>
-                        {a.type}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-slate-900 leading-snug">{a.title}</p>
-                  </div>
-                ))}
-                {selectedDateSessions.map((s) => (
-                  <div key={s.id} className={`rounded-xl p-3 border ${s.completed ? "bg-emerald-50 border-emerald-100 opacity-60" : "bg-teal-50 border-teal-100"}`}>
-                    <p className="text-xs font-semibold text-teal-800 leading-snug">{s.title}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Clock className="w-3 h-3 text-teal-500" />
-                      <span className="text-[10px] text-teal-600">{s.duration_minutes} min</span>
-                      {s.completed && <span className="ml-auto text-[10px] text-emerald-600 font-medium">Done</span>}
-                    </div>
+                  <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-400" : "bg-amber-400"}`} />
+                    <span className="font-medium text-slate-700 truncate">{a.title}</span>
+                    <span className={`ml-auto flex-shrink-0 font-semibold ${a.type === "exam" ? "text-rose-500" : "text-amber-600"}`}>
+                      {a.type} due
+                    </span>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* Time grid */}
+            <div className="relative" style={{ height: `${timeSlots.length * SLOT_H}px` }}>
+              {timeSlots.map((slot, i) => (
+                <div
+                  key={i}
+                  onClick={() => openPopoverNew(slot.timeStr)}
+                  className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/30 cursor-pointer transition-colors flex items-start"
+                  style={{ top: i * SLOT_H, height: SLOT_H }}
+                >
+                  <span className="text-[9px] text-slate-400 w-12 pl-3 pt-1 flex-shrink-0 select-none">
+                    {slot.label}
+                  </span>
+                </div>
+              ))}
+
+              {/* Session blocks */}
+              {selectedDateSessions.map((s) => {
+                const top = slotTop(s.start_time ?? "09:00");
+                const height = slotHeight(s.duration_minutes);
+                return (
+                  <div
+                    key={s.id}
+                    onClick={(e) => { e.stopPropagation(); openPopoverEdit(s); }}
+                    className={`absolute left-12 right-2 rounded-lg px-2 py-1 cursor-pointer border transition-all hover:shadow-sm
+                      ${s.completed
+                        ? "bg-emerald-50 border-emerald-200 opacity-60"
+                        : "bg-indigo-100 border-indigo-200 hover:bg-indigo-200"
+                      }`}
+                    style={{ top: top + 1, height: height - 2 }}
+                  >
+                    <p className="text-[10px] font-semibold text-indigo-800 truncate leading-tight">{s.title}</p>
+                    {height >= 36 && (
+                      <p className="text-[9px] text-indigo-500 mt-0.5">
+                        {s.start_time?.slice(0, 5) ?? "09:00"} · {s.duration_minutes}m
+                      </p>
+                    )}
+                    {s.completed && height >= 36 && (
+                      <p className="text-[9px] text-emerald-600 font-semibold">Done</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Footer */}
@@ -664,6 +790,103 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           </div>
         </div>
       </div>
+
+      {/* ── Session edit / create modal ── */}
+      {popover.open && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setPopover((p) => ({ ...p, open: false }))}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 animate-in fade-in slide-in-from-bottom-4 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-900">
+                {popover.sessionId ? "Edit session" : "New session"}
+              </h3>
+              <button
+                onClick={() => setPopover((p) => ({ ...p, open: false }))}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Title */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">Title</label>
+                <input
+                  type="text"
+                  value={popover.title}
+                  onChange={(e) => setPopover((p) => ({ ...p, title: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && saveSession()}
+                  placeholder="e.g. Study for Physics exam"
+                  autoFocus
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">Date</label>
+                <input
+                  type="date"
+                  value={popover.date}
+                  onChange={(e) => setPopover((p) => ({ ...p, date: e.target.value }))}
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Start time + Duration */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Start time</label>
+                  <input
+                    type="time"
+                    value={popover.startTime}
+                    onChange={(e) => setPopover((p) => ({ ...p, startTime: e.target.value }))}
+                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Duration</label>
+                  <select
+                    value={popover.durationMinutes}
+                    onChange={(e) => setPopover((p) => ({ ...p, durationMinutes: Number(e.target.value) }))}
+                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                  >
+                    {[30, 45, 60, 90, 120].map((m) => (
+                      <option key={m} value={m}>
+                        {m < 60 ? `${m} min` : `${m / 60}h${m % 60 ? ` ${m % 60}m` : ""}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 mt-5">
+              <button
+                onClick={saveSession}
+                disabled={!popover.title.trim()}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+              >
+                {popover.sessionId ? "Save changes" : "Add session"}
+              </button>
+              {popover.sessionId && (
+                <button
+                  onClick={deleteSession}
+                  className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 flex items-center justify-center transition-colors"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-400" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
