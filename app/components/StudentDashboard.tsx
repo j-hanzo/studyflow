@@ -225,7 +225,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <div className="px-8 py-6 space-y-8">
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Materials to File */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Materials to File</p>
@@ -299,7 +299,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   <Camera className="w-3 h-3" /> Add more
                 </Link>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {inbox.map((m) => {
                   const cls = classes.find((c) => c.id === m.class_id);
                   const isPdf = m.photo_url?.toLowerCase().endsWith(".pdf");
@@ -341,8 +341,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           )}
 
           {/* ── Main content + right column ── */}
-          <div className="grid grid-cols-3 gap-6">
-            <div className="col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-8">
 
               {/* Due This Week */}
               {thisWeekAssignments.length > 0 && (
@@ -356,7 +356,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       View calendar <ChevronRight className="w-3 h-3" />
                     </Link>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {thisWeekAssignments.map((a) => {
                       const days = daysUntil(a.due_date);
                       return (
@@ -394,7 +394,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       <span className="text-xs bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-full">{nextWeekAssignments.length}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {nextWeekAssignments.map((a) => (
                       <div key={a.id} className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-2 hover:border-indigo-200 hover:shadow-sm transition-all">
                         <div className="flex items-center gap-1.5">
@@ -425,7 +425,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       <span className="text-xs bg-rose-100 text-rose-600 font-semibold px-2 py-0.5 rounded-full">{overdueAssignments.length}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {overdueAssignments.map((a) => (
                       <div key={a.id} className="bg-white rounded-xl border border-rose-200 p-4 flex flex-col gap-2 hover:shadow-sm transition-all">
                         <div className="flex items-center gap-1.5">
