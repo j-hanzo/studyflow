@@ -54,7 +54,7 @@ export default async function Home() {
       .eq("student_id", user.id).eq("completed", false).gte("due_date", today)
       .order("due_date", { ascending: true }).limit(8),
     db.from("study_sessions").select("*")
-      .eq("student_id", user.id).eq("scheduled_date", today).order("created_at", { ascending: true }),
+      .eq("student_id", user.id).order("scheduled_date", { ascending: true }),
     db.from("messages").select("*, sender:profiles!sender_id(full_name)")
       .eq("recipient_id", user.id).eq("read", false).order("created_at", { ascending: false }).limit(3),
     db.from("materials").select("*")
