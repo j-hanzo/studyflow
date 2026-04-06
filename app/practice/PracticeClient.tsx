@@ -46,6 +46,20 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
     setError("");
 
     try {
+      // Fetch wiki notes_summary to avoid redundant cards
+      let notesSummary = "";
+      try {
+        const wikiRes = await fetch("/api/wiki/get", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ class_id: selectedClassId }),
+        });
+        if (wikiRes.ok) {
+          const wikiData = await wikiRes.json();
+          notesSummary = wikiData?.notes_summary ?? "";
+        }
+      } catch { /* silent */ }
+
       const res = await fetch("/api/generate-flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,7 +69,8 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
             content_text: m.content_text!,
           })),
           className: selectedClass?.name ?? "class",
-          count: Math.min(classMaterials.length * 4, 15), // up to 15 cards
+          count: Math.min(classMaterials.length * 4, 15),
+          notesSummary,
         }),
       });
 

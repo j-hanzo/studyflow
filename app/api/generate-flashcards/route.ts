@@ -7,10 +7,11 @@ interface MaterialInput {
 }
 
 export async function POST(req: NextRequest) {
-  const { materials, className, count = 10 } = await req.json() as {
+  const { materials, className, count = 10, notesSummary = "" } = await req.json() as {
     materials: MaterialInput[];
     className: string;
     count?: number;
+    notesSummary?: string;
   };
 
   if (!materials?.length) {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
 Here are their notes and materials:
 
 ${materialBlocks}
+${notesSummary ? `\nNOTES INTELLIGENCE (use to avoid redundancy and target gaps):\n${notesSummary}` : ""}
 
 Generate exactly ${count} flashcard question-and-answer pairs. Rules:
 - Questions should test genuine understanding, not just word-for-word recall
@@ -41,6 +43,7 @@ Generate exactly ${count} flashcard question-and-answer pairs. Rules:
 - Answers should be clear and concise (1–3 sentences max)
 - Pull directly from the material provided — don't invent topics
 - Vary difficulty: some easy recall, some requiring deeper thinking
+- If notes intelligence is provided, prioritise gaps and thinly covered areas
 
 Return ONLY valid JSON, no explanation:
 {

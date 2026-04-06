@@ -29,12 +29,10 @@ export async function middleware(request: NextRequest) {
   const publicPaths = ['/login', '/signup', '/api/reminders']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
-  // Redirect unauthenticated users to login
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect authenticated users away from auth pages
   if (user && isPublic) {
     return NextResponse.redirect(new URL('/', request.url))
   }

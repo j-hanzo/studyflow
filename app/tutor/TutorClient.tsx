@@ -33,12 +33,18 @@ const QUICK_ACTIONS = [
   "Create a 5-day study plan",
 ];
 
+interface Wiki {
+  tutor_summary: string;
+  notes_summary: string;
+}
+
 function buildSystemPrompt(
   profile: Profile,
   allClasses: Class[],
   materials: Material[],
   upcoming: Assignment[],
-  selectedClassId: string | null
+  selectedClassId: string | null,
+  wiki: Wiki | null
 ): string {
   const studentName = profile.full_name ?? "Student";
   const selectedClass = allClasses.find((c) => c.id === selectedClassId);
@@ -56,7 +62,6 @@ function buildSystemPrompt(
         .join("\n")
     : "No upcoming deadlines.";
 
-  // Include materials for selected class, or all if none selected
   const relevantMaterials = materials.filter(
     (m) => !selectedClassId || m.class_id === selectedClassId
   );
@@ -71,11 +76,21 @@ function buildSystemPrompt(
         .join("\n\n---\n\n")
     : "No materials uploaded yet. Encourage the student to add notes via the Capture page.";
 
+  const wikiSection = wiki
+    ? `
+TUTORING HISTORY (private — do not quote directly):
+${wiki.tutor_summary || "No previous sessions yet."}
+
+NOTES INTELLIGENCE (private — use to avoid redundancy and inform practice questions):
+${wiki.notes_summary || "No notes summary yet."}`
+    : "";
+
   return `You are a knowledgeable, encouraging AI tutor for ${studentName}.
 
 STUDENT CONTEXT:
 ${classContext}
 Grade: ${profile.grade ?? "not specified"}
+${wikiSection}
 
 UPCOMING DEADLINES:
 ${upcomingText}
@@ -84,6 +99,8 @@ STUDENT'S NOTES & MATERIALS:
 ${materialsText}
 
 INSTRUCTIONS:
+- Use the tutoring history to continue naturally from previous sessions — do not restart from scratch
+- Use the notes intelligence to avoid generating redundant flashcards or questions
 - Reference specific content from the student's actual notes when answering
 - For practice questions, base them on the student's real material
 - For study schedules, use the actual upcoming deadlines above
@@ -104,11 +121,25 @@ export default function TutorClient({
   const [selectedClassId, setSelectedClassId] = useState<string | null>(
     defaultClassId ?? null
   );
+  const [wiki, setWiki] = useState<Wiki | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]       = useState(defaultPrompt ?? "");
   const [streaming, setStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [error, setError]       = useState("");
+
+  // Fetch wiki whenever class selection changes
+  useEffect(() => {
+    if (!selectedClassId) { setWiki(null); return; }
+    fetch("/api/wiki/get", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ class_id: selectedClassId }),
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setWiki(data ?? null))
+      .catch(() => setWiki(null));
+  }, [selectedClassId]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef    = useRef<HTMLTextAreaElement>(null);
@@ -131,7 +162,7 @@ export default function TutorClient({
   );
 
   const systemPrompt = buildSystemPrompt(
-    profile, allClasses, allMaterials, upcomingAssignments, selectedClassId
+    profile, allClasses, allMaterials, upcomingAssignments, selectedClassId, wiki
   );
 
   // Dynamic suggested questions based on upcoming exams
@@ -185,14 +216,24 @@ export default function TutorClient({
         setStreamingText(full);
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: full }]);
+      const finalMessages = [...newMessages, { role: "assistant" as const, content: full }];
+      setMessages(finalMessages);
       setStreamingText("");
+
+      // Fire-and-forget wiki update for the selected class
+      if (selectedClassId) {
+        fetch("/api/wiki/update-tutor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ class_id: selectedClassId, messages: finalMessages }),
+        }).catch(() => {/* silent — wiki update is best-effort */});
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setStreaming(false);
     }
-  }, [messages, streaming, systemPrompt]);
+  }, [messages, streaming, systemPrompt, selectedClassId]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {

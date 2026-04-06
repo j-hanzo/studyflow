@@ -230,6 +230,14 @@ export default function CaptureClient({ profile, allClasses, recentMaterials, de
       }
 
       setStep("done");
+
+      // Fire-and-forget wiki notes update for this class
+      fetch("/api/wiki/update-notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ class_id: classId }),
+      }).catch(() => {/* silent — wiki update is best-effort */});
+
       setTimeout(() => router.push(`/class/${classId}`), 1200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
