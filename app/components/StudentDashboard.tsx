@@ -3,7 +3,8 @@
 import Link from "next/link";
 import {
   Camera, Bell, CheckCircle2, Clock, Sparkles,
-  ChevronRight, Plus, StickyNote, FileText, ClipboardList,
+  ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
+  PanelLeft, CalendarDays, X,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
@@ -49,9 +50,43 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [sessions, setSessions] = useState(studySessions);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Mini calendar state
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
+
   const supabase = createClient();
   const router = useRouter();
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
+
+  // Mini calendar computed values
+  const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const calendarCells = [
+    ...Array(firstDayOfMonth).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  const assignmentsByDate = assignments.reduce<Record<string, number>>((acc, a) => {
+    const d = a.due_date.slice(0, 10);
+    acc[d] = (acc[d] ?? 0) + 1;
+    return acc;
+  }, {});
+  const selectedDateAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === selectedDate);
+  const selectedDateSessions = sessions.filter((s) => s.scheduled_date === selectedDate);
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
+    else setViewMonth((m) => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
+    else setViewMonth((m) => m + 1);
+  }
 
   const [inbox, setInbox] = useState(recentMaterials);
 
@@ -109,7 +144,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
       {showAddClass && (
         <AddClassModal
           studentId={profile.id}
@@ -125,19 +160,33 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           onSaved={() => { setShowAddAssignment(false); router.refresh(); }}
         />
       )}
-      <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
 
-      <main className="flex-1 overflow-auto">
+      {/* ── Left sidebar with slide animation ── */}
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${sidebarOpen ? "w-64" : "w-0"}`}>
+        <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
+      </div>
+
+      <main className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{greeting}, {firstName} 👋</h1>
-            <p className="text-sm text-slate-500">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-              {profile.grade ? ` · ${profile.grade}` : ""}
-            </p>
+        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Sidebar toggle */}
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center flex-shrink-0 transition-colors"
+              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              <PanelLeft className={`w-4 h-4 text-slate-600 transition-transform duration-300 ${sidebarOpen ? "" : "rotate-180"}`} />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 truncate">{greeting}, {firstName} 👋</h1>
+              <p className="text-sm text-slate-500 truncate">
+                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                {profile.grade ? ` · ${profile.grade}` : ""}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href="/capture"
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
@@ -150,6 +199,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               {messages.length > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
               )}
+            </button>
+            {/* Calendar toggle */}
+            <button
+              onClick={() => setCalendarOpen((o) => !o)}
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${calendarOpen ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-100 hover:bg-slate-200"}`}
+              title={calendarOpen ? "Hide calendar" : "Show calendar"}
+            >
+              <CalendarDays className={`w-4 h-4 ${calendarOpen ? "text-white" : "text-slate-600"}`} />
             </button>
           </div>
         </header>
@@ -487,6 +544,115 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           </div>
         </div>
       </main>
+
+      {/* ── Right calendar panel with slide animation ── */}
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-80" : "w-0"}`}>
+        <div className="w-80 min-h-screen bg-white border-l border-slate-200 flex flex-col">
+          {/* Panel header */}
+          <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+            <div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Calendar</p>
+              <p className="text-sm font-bold text-slate-900">
+                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+              </p>
+            </div>
+            <button
+              onClick={() => setCalendarOpen(false)}
+              className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+            >
+              <X className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+
+          {/* Mini month calendar */}
+          <div className="px-4 py-4 border-b border-slate-100 flex-shrink-0">
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-3">
+              <button onClick={prevMonth} className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+                <ChevronLeft className="w-4 h-4 text-slate-500" />
+              </button>
+              <p className="text-sm font-semibold text-slate-900">{MONTH_NAMES[viewMonth]} {viewYear}</p>
+              <button onClick={nextMonth} className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+                <ChevronRight className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            {/* Day-of-week headers */}
+            <div className="grid grid-cols-7 mb-1">
+              {["S","M","T","W","T","F","S"].map((d, i) => (
+                <div key={i} className="text-center text-[10px] font-semibold text-slate-400">{d}</div>
+              ))}
+            </div>
+            {/* Day cells */}
+            <div className="grid grid-cols-7 gap-y-0.5">
+              {calendarCells.map((day, i) => {
+                if (!day) return <div key={i} />;
+                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === selectedDate;
+                const count = assignmentsByDate[dateStr] ?? 0;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedDate(dateStr)}
+                    className={`relative flex flex-col items-center justify-center h-8 rounded-lg text-xs font-medium transition-all
+                      ${isToday ? "bg-indigo-600 text-white" : ""}
+                      ${isSelected && !isToday ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-300" : ""}
+                      ${!isToday && !isSelected ? "text-slate-700 hover:bg-slate-100" : ""}
+                    `}
+                  >
+                    {day}
+                    {count > 0 && (
+                      <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${isToday ? "bg-white/70" : "bg-rose-400"}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selected date events */}
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              {selectedDate === todayStr ? "Today" : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            </p>
+            {selectedDateAssignments.length === 0 && selectedDateSessions.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8">Nothing scheduled</p>
+            ) : (
+              <div className="space-y-2">
+                {selectedDateAssignments.map((a) => (
+                  <div key={a.id} className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-300"}`} />
+                      <span className="text-[10px] font-medium text-slate-500 truncate">{a.classes?.name}</span>
+                      <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${a.type === "exam" ? "bg-rose-100 text-rose-600" : a.type === "quiz" ? "bg-violet-100 text-violet-600" : "bg-blue-100 text-blue-600"}`}>
+                        {a.type}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-900 leading-snug">{a.title}</p>
+                  </div>
+                ))}
+                {selectedDateSessions.map((s) => (
+                  <div key={s.id} className={`rounded-xl p-3 border ${s.completed ? "bg-emerald-50 border-emerald-100 opacity-60" : "bg-teal-50 border-teal-100"}`}>
+                    <p className="text-xs font-semibold text-teal-800 leading-snug">{s.title}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Clock className="w-3 h-3 text-teal-500" />
+                      <span className="text-[10px] text-teal-600">{s.duration_minutes} min</span>
+                      {s.completed && <span className="ml-auto text-[10px] text-emerald-600 font-medium">Done</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-slate-100 flex-shrink-0">
+            <Link href="/calendar" className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
+              Open full calendar <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
