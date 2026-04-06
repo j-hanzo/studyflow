@@ -132,7 +132,7 @@ export default function CalendarClient({ profile, allClasses, assignments, initi
 
       if (!res.ok) throw new Error("Failed to generate plan");
       const { sessions: generated } = await res.json() as {
-        sessions: { assignment_id: string | null; title: string; scheduled_date: string; duration_minutes: number }[];
+        sessions: { assignment_id: string | null; title: string; scheduled_date: string; start_time?: string; duration_minutes: number }[];
       };
 
       if (!generated?.length) throw new Error("No sessions generated");
@@ -147,12 +147,13 @@ export default function CalendarClient({ profile, allClasses, assignments, initi
 
       // Insert new sessions
       const toInsert = generated.map((s) => ({
-        student_id:      profile.id,
-        assignment_id:   s.assignment_id ?? null,
-        title:           s.title,
-        scheduled_date:  s.scheduled_date,
+        student_id:       profile.id,
+        assignment_id:    s.assignment_id ?? null,
+        title:            s.title,
+        scheduled_date:   s.scheduled_date,
+        start_time:       s.start_time ?? "16:00",
         duration_minutes: s.duration_minutes,
-        completed:       false,
+        completed:        false,
       }));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

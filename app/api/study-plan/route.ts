@@ -46,6 +46,10 @@ Generate a practical study schedule from today through the last deadline. Follow
 - Give each session a specific, actionable title (e.g. "Review Chapter 4 — Derivatives", "Draft essay outline — Romeo & Juliet")
 - Only schedule sessions on or after today (${today})
 - Only schedule sessions up to and including the due date
+- Assign a realistic start_time for each session in HH:MM (24-hour) format
+  - First session of the day: pick a time between 15:00 and 17:00 (after school)
+  - Second session of the day (if any): at least 2 hours after the first, no later than 21:00
+  - Vary times naturally (e.g. 15:30, 16:00, 17:00, 19:00) — don't use the same time for every session
 
 Return ONLY valid JSON — no explanation, no markdown fences:
 {
@@ -54,6 +58,7 @@ Return ONLY valid JSON — no explanation, no markdown fences:
       "assignment_id": "<assignment id from above, or null>",
       "title": "<specific actionable title>",
       "scheduled_date": "<YYYY-MM-DD>",
+      "start_time": "<HH:MM>",
       "duration_minutes": <30|45|60>
     }
   ]
