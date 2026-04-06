@@ -112,13 +112,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     date: string;
     startTime: string;
     durationMinutes: number;
+    completed: boolean;
   }
   const [popover, setPopover] = useState<SessionPopover>({
-    open: false, sessionId: null, title: "", date: todayStr, startTime: "09:00", durationMinutes: 60,
+    open: false, sessionId: null, title: "", date: todayStr, startTime: "09:00", durationMinutes: 60, completed: false,
   });
 
   function openPopoverNew(slotTime: string) {
-    setPopover({ open: true, sessionId: null, title: "", date: selectedDate, startTime: slotTime, durationMinutes: 60 });
+    setPopover({ open: true, sessionId: null, title: "", date: selectedDate, startTime: slotTime, durationMinutes: 60, completed: false });
   }
   function openPopoverEdit(session: typeof sessions[number]) {
     setPopover({
@@ -128,6 +129,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       date: session.scheduled_date,
       startTime: session.start_time?.slice(0, 5) ?? "09:00",
       durationMinutes: session.duration_minutes,
+      completed: session.completed,
     });
   }
   async function saveSession() {
@@ -139,10 +141,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         scheduled_date: popover.date,
         start_time: popover.startTime,
         duration_minutes: popover.durationMinutes,
+        completed: popover.completed,
       }).eq("id", popover.sessionId);
       setSessions((prev) => prev.map((s) =>
         s.id === popover.sessionId
-          ? { ...s, title: popover.title, scheduled_date: popover.date, start_time: popover.startTime + ":00", duration_minutes: popover.durationMinutes }
+          ? { ...s, title: popover.title, scheduled_date: popover.date, start_time: popover.startTime + ":00", duration_minutes: popover.durationMinutes, completed: popover.completed }
           : s
       ));
     } else {
@@ -880,8 +883,27 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               </div>
             </div>
 
+            {/* Completed toggle — only for existing sessions */}
+            {popover.sessionId && (
+              <button
+                onClick={() => setPopover((p) => ({ ...p, completed: !p.completed }))}
+                className={`w-full mt-4 flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                  popover.completed
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    : "bg-slate-50 border-slate-200 text-slate-500 hover:border-emerald-200 hover:text-emerald-600"
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  popover.completed ? "bg-emerald-500 border-emerald-500" : "border-slate-300"
+                }`}>
+                  {popover.completed && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                </div>
+                {popover.completed ? "Marked as complete" : "Mark as complete"}
+              </button>
+            )}
+
             {/* Actions */}
-            <div className="flex items-center gap-2 mt-5">
+            <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={saveSession}
                 disabled={!popover.title.trim()}
