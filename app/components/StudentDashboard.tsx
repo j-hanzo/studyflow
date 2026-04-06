@@ -51,7 +51,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(true);
 
   // On mobile, default both panels to hidden
   useEffect(() => {
