@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowLeft, Sparkles, Save, Trash2, X, Plus,
   FileText, StickyNote, ClipboardList, Loader2, AlertCircle,
-  Send, ChevronDown, ChevronUp, Calendar, Clock, MessageSquare,
+  Send, ChevronDown, ChevronUp, Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import type { Profile, Class, Material, Assignment } from "@/lib/supabase/types";
@@ -22,14 +22,7 @@ interface Props {
   linkedAssignment: Assignment | null;
 }
 
-interface ChatMessage { role: "user" | "assistant"; content: string; timestamp?: string; }
-
-interface TutorSession {
-  id: string;
-  messages: ChatMessage[];
-  started_at: string;
-  last_message_at: string;
-}
+interface ChatMessage { role: "user" | "assistant"; content: string; }
 
 type MaterialType = "notes" | "assignment" | "handout";
 
@@ -57,53 +50,16 @@ export default function MaterialDetailClient({ profile, allClasses, material, cl
   const [saved, setSaved]           = useState(false);
 
   // Inline tutor state
-  const [tutorOpen, setTutorOpen]             = useState(false);
-  const [tutorTab, setTutorTab]               = useState<"chat" | "history">("chat");
-  const [chatMessages, setChatMessages]       = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput]             = useState("");
-  const [chatStreaming, setChatStreaming]      = useState(false);
-  const [chatStreamText, setChatStreamText]   = useState("");
+  const [tutorOpen, setTutorOpen]           = useState(false);
+  const [chatMessages, setChatMessages]     = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput]           = useState("");
+  const [chatStreaming, setChatStreaming]    = useState(false);
+  const [chatStreamText, setChatStreamText] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Session history state
-  const [sessions, setSessions]                 = useState<TutorSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [sessionsLoaded, setSessionsLoaded]     = useState(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatStreamText]);
-
-  // Load sessions the first time the tutor panel is opened
-  useEffect(() => {
-    if (tutorOpen && !sessionsLoaded) loadSessions();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tutorOpen]);
-
-  async function loadSessions() {
-    setSessionsLoaded(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
-      .from("tutor_sessions")
-      .select("id, messages, started_at, last_message_at")
-      .eq("material_id", material.id)
-      .eq("student_id", profile.id)
-      .order("last_message_at", { ascending: false })
-      .limit(20);
-    if (!data || data.length === 0) return;
-    setSessions(data as TutorSession[]);
-    // Resume the most recent session — gives Claude full context
-    const recent = data[0] as TutorSession;
-    setCurrentSessionId(recent.id);
-    // Strip timestamps before passing to state used for Claude API calls
-    setChatMessages(recent.messages.map((m) => ({ role: m.role, content: m.content })));
-  }
-
-  function startNewConversation() {
-    setChatMessages([]);
-    setCurrentSessionId(null);
-    setTutorTab("chat");
-  }
 
   const dirty =
     title !== material.title ||
@@ -201,52 +157,16 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
         full += decoder.decode(value, { stream: true });
         setChatStreamText(full);
       }
-      setChatMessages((prev) => [...prev, { role: "assistant", content: full }]);
+      const allMessages = [...newMessages, { role: "assistant" as const, content: full }];
+      setChatMessages(allMessages);
       setChatStreamText("");
 
-      // ── Persist Q&A to DB with timestamps ──────────────────────────
-      const now = new Date().toISOString();
-      const userMsgDb: ChatMessage  = { role: "user",      content: trimmed, timestamp: now };
-      const asstMsgDb: ChatMessage  = { role: "assistant", content: full,    timestamp: now };
-
-      if (!currentSessionId) {
-        // First message → create a new session
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: newSession } = await (supabase as any)
-          .from("tutor_sessions")
-          .insert({
-            student_id:      profile.id,
-            material_id:     material.id,
-            messages:        [userMsgDb, asstMsgDb],
-            last_message_at: now,
-          })
-          .select("id, started_at")
-          .single();
-        if (newSession) {
-          setCurrentSessionId(newSession.id);
-          const sess: TutorSession = {
-            id:              newSession.id,
-            messages:        [userMsgDb, asstMsgDb],
-            started_at:      newSession.started_at,
-            last_message_at: now,
-          };
-          setSessions((prev) => [sess, ...prev]);
-        }
-      } else {
-        // Append to the existing session
-        const existing     = sessions.find((s) => s.id === currentSessionId);
-        const updatedMsgs  = [...(existing?.messages ?? []), userMsgDb, asstMsgDb];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
-          .from("tutor_sessions")
-          .update({ messages: updatedMsgs, last_message_at: now })
-          .eq("id", currentSessionId);
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === currentSessionId ? { ...s, messages: updatedMsgs, last_message_at: now } : s
-          )
-        );
-      }
+      // Fire-and-forget: update the class wiki tutor summary
+      fetch("/api/wiki/update-tutor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ class_id: classInfo.id, messages: allMessages }),
+      }).catch(() => { /* silent */ });
     } catch {
       setChatMessages((prev) => [...prev, { role: "assistant", content: "Sorry, something went wrong. Try again." }]);
     } finally {
@@ -543,45 +463,8 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
               {tutorOpen && (
                 <div className="border-t border-slate-100">
 
-                  {/* Tab bar */}
-                  <div className="px-5 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
-                      <button
-                        onClick={() => setTutorTab("chat")}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                          tutorTab === "chat"
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        <MessageSquare className="w-3 h-3" /> Chat
-                      </button>
-                      <button
-                        onClick={() => setTutorTab("history")}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                          tutorTab === "history"
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        <Clock className="w-3 h-3" /> History
-                        {sessions.length > 0 && (
-                          <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                            {sessions.reduce((n, s) => n + Math.floor(s.messages.length / 2), 0)}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                    <button
-                      onClick={startNewConversation}
-                      className="text-xs text-slate-400 hover:text-indigo-600 font-medium transition-colors"
-                    >
-                      + New conversation
-                    </button>
-                  </div>
-
-                  {/* ── Chat tab ── */}
-                  {tutorTab === "chat" && (
+                  {/* ── Chat ── */}
+                  {(
                     <>
                       <div className="max-h-80 overflow-y-auto px-5 py-4 space-y-4 bg-slate-50">
                         {chatMessages.length === 0 && !chatStreaming && (
@@ -657,96 +540,6 @@ Help them understand and complete this assignment. Explain concepts clearly, ask
                         </button>
                       </div>
                     </>
-                  )}
-
-                  {/* ── History tab ── */}
-                  {tutorTab === "history" && (
-                    <div className="max-h-96 overflow-y-auto bg-slate-50">
-                      {sessions.length === 0 ? (
-                        <div className="px-5 py-10 text-center">
-                          <Clock className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                          <p className="text-xs text-slate-400">No conversation history yet</p>
-                          <button
-                            onClick={() => setTutorTab("chat")}
-                            className="mt-3 text-xs text-indigo-600 font-medium hover:underline"
-                          >
-                            Start a conversation →
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-slate-100">
-                          {sessions.map((session) => {
-                            // Group messages into Q&A pairs
-                            const pairs: { q: ChatMessage; a?: ChatMessage }[] = [];
-                            for (let i = 0; i < session.messages.length; i += 2) {
-                              pairs.push({ q: session.messages[i], a: session.messages[i + 1] });
-                            }
-                            return (
-                              <div key={session.id} className="px-5 py-4">
-                                {/* Session date/time header */}
-                                <div className="flex items-center gap-2 mb-3">
-                                  <Clock className="w-3 h-3 text-slate-400" />
-                                  <p className="text-xs font-semibold text-slate-400">
-                                    {new Date(session.started_at).toLocaleDateString("en-US", {
-                                      weekday: "short", month: "short", day: "numeric", year: "numeric",
-                                    })}
-                                    {" · "}
-                                    {new Date(session.started_at).toLocaleTimeString("en-US", {
-                                      hour: "numeric", minute: "2-digit",
-                                    })}
-                                  </p>
-                                </div>
-
-                                {/* Q&A pairs */}
-                                <div className="space-y-3">
-                                  {pairs.map(({ q, a }, pi) => (
-                                    <div key={pi} className="space-y-2">
-                                      {/* Question */}
-                                      <div className="flex justify-end">
-                                        <div className="max-w-xs">
-                                          <div className="bg-indigo-600 text-white rounded-xl px-3 py-2 text-xs">
-                                            {q.content}
-                                          </div>
-                                          {q.timestamp && (
-                                            <p className="text-[10px] text-slate-400 mt-0.5 text-right">
-                                              {new Date(q.timestamp).toLocaleTimeString("en-US", {
-                                                hour: "numeric", minute: "2-digit",
-                                              })}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </div>
-                                      {/* Answer */}
-                                      {a && (
-                                        <div className="flex gap-2">
-                                          <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                            <Sparkles className="w-3.5 h-3.5 text-white" />
-                                          </div>
-                                          <div className="max-w-xs">
-                                            <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700">
-                                              <div className="prose prose-xs max-w-none">
-                                                <ReactMarkdown>{a.content}</ReactMarkdown>
-                                              </div>
-                                            </div>
-                                            {a.timestamp && (
-                                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                                {new Date(a.timestamp).toLocaleTimeString("en-US", {
-                                                  hour: "numeric", minute: "2-digit",
-                                                })}
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
                   )}
 
                 </div>

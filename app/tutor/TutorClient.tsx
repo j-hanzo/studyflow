@@ -36,6 +36,7 @@ const QUICK_ACTIONS = [
 interface Wiki {
   tutor_summary: string;
   notes_summary: string;
+  practice_summary: string;
 }
 
 function buildSystemPrompt(
@@ -82,7 +83,10 @@ TUTORING HISTORY (private — do not quote directly):
 ${wiki.tutor_summary || "No previous sessions yet."}
 
 NOTES INTELLIGENCE (private — use to avoid redundancy and inform practice questions):
-${wiki.notes_summary || "No notes summary yet."}`
+${wiki.notes_summary || "No notes summary yet."}
+
+PRACTICE HISTORY (private — use to target gaps and avoid repeating mastered material):
+${wiki.practice_summary || "No practice sessions yet."}`
     : "";
 
   return `You are a knowledgeable, encouraging AI tutor for ${studentName}.

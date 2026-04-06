@@ -135,6 +135,30 @@ export interface Database {
         }
         Update: { read?: boolean }
       }
+      student_wiki: {
+        Row: {
+          id: string
+          student_id: string
+          class_id: string
+          tutor_summary: string | null
+          notes_summary: string | null
+          practice_summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          student_id: string
+          class_id: string
+          tutor_summary?: string | null
+          notes_summary?: string | null
+          practice_summary?: string | null
+        }
+        Update: {
+          tutor_summary?: string | null
+          notes_summary?: string | null
+          practice_summary?: string | null
+          updated_at?: string
+        }
+      }
       study_sessions: {
         Row: {
           id: string
@@ -178,3 +202,4 @@ export type Material = Database['public']['Tables']['materials']['Row']
 export type Assignment = Database['public']['Tables']['assignments']['Row']
 export type Message = Database['public']['Tables']['messages']['Row']
 export type StudySession = Database['public']['Tables']['study_sessions']['Row']
+export type StudentWiki = Database['public']['Tables']['student_wiki']['Row']

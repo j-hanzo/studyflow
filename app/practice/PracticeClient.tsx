@@ -46,8 +46,9 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
     setError("");
 
     try {
-      // Fetch wiki notes_summary to avoid redundant cards
+      // Fetch wiki summaries to avoid redundant cards and target gaps
       let notesSummary = "";
+      let practiceSummary = "";
       try {
         const wikiRes = await fetch("/api/wiki/get", {
           method: "POST",
@@ -56,7 +57,8 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
         });
         if (wikiRes.ok) {
           const wikiData = await wikiRes.json();
-          notesSummary = wikiData?.notes_summary ?? "";
+          notesSummary    = wikiData?.notes_summary    ?? "";
+          practiceSummary = wikiData?.practice_summary ?? "";
         }
       } catch { /* silent */ }
 
@@ -71,6 +73,7 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
           className: selectedClass?.name ?? "class",
           count: Math.min(classMaterials.length * 4, 15),
           notesSummary,
+          practiceSummary,
         }),
       });
 
@@ -100,6 +103,17 @@ export default function PracticeClient({ profile, allClasses, allMaterials }: Pr
     if (newDeck.length === 0) {
       setDeck([]);
       setScreen("done");
+      // Fire-and-forget: update practice wiki with session results
+      fetch("/api/wiki/update-practice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          class_id: selectedClassId,
+          cards,
+          gotCount: newGot,
+          total: cards.length,
+        }),
+      }).catch(() => { /* silent */ });
     } else {
       setDeck(newDeck);
       setCurrentIdx((prev) => prev % newDeck.length);
