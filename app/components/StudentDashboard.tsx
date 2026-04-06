@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  Camera, Bell, CheckCircle2, Clock, Sparkles,
+  Camera, CheckCircle2,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
   CalendarDays, X, Trash2,
 } from "lucide-react";
@@ -417,12 +417,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <Camera className="w-4 h-4" />
               Upload Material
             </Link>
-            <button className="relative w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-              <Bell className="w-4 h-4 text-slate-600" />
-              {messages.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
-              )}
-            </button>
           </div>
         </header>
 
@@ -544,9 +538,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
           )}
 
-          {/* ── Main content + right column ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-8">
+          {/* ── Main content ── */}
+          <div className="space-y-8">
 
               {/* Due This Week */}
               {thisWeekAssignments.length > 0 && (
@@ -556,9 +549,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       <h2 className="text-base font-bold text-slate-900">Due This Week</h2>
                       <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">{thisWeekAssignments.length}</span>
                     </div>
-                    <Link href="/calendar" className="text-xs text-slate-400 hover:text-indigo-600 font-medium flex items-center gap-1">
-                      View calendar <ChevronRight className="w-3 h-3" />
-                    </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {thisWeekAssignments.map((a) => {
@@ -665,97 +655,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   </button>
                 </div>
               )}
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-4">
-              {/* AI Tutor CTA */}
-              <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-4 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-indigo-200" />
-                  <span className="text-xs font-semibold text-indigo-200 uppercase tracking-wide">AI Tutor</span>
-                </div>
-                <p className="text-sm font-medium mb-1">Ready to help you study</p>
-                <p className="text-xs text-indigo-200 leading-relaxed">
-                  Ask anything about your classes, get practice questions, or build a study plan.
-                </p>
-                <Link
-                  href="/tutor"
-                  className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg w-fit"
-                >
-                  Open AI Tutor <ChevronRight className="w-3 h-3" />
-                </Link>
-              </div>
-
-              {/* Today's study sessions */}
-              {sessions.filter(s => daysFromToday(s.scheduled_date) === 0).length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Today&apos;s Sessions</h3>
-                  <div className="space-y-2">
-                    {sessions.filter(s => daysFromToday(s.scheduled_date) === 0).map((s) => (
-                      <div key={s.id} className={`bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3 ${s.completed ? "opacity-50" : ""}`}>
-                        <button
-                          onClick={() => toggleSession(s.id, s.completed)}
-                          className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${s.completed ? "bg-emerald-500 border-emerald-500" : "border-slate-300 hover:border-emerald-400"}`}
-                        >
-                          {s.completed && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-medium truncate ${s.completed ? "line-through text-slate-400" : "text-slate-800"}`}>{s.title}</p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Clock className="w-2.5 h-2.5 text-slate-400" />
-                            <span className="text-[10px] text-slate-400">{s.duration_minutes} min</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Messages from parent */}
-              {messages.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Messages</h3>
-                  {messages.slice(0, 2).map((m) => (
-                    <div key={m.id} className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold text-amber-800">
-                          {m.sender?.full_name?.[0] ?? "P"}
-                        </div>
-                        <span className="text-xs font-semibold text-amber-800">{m.sender?.full_name ?? "Parent"}</span>
-                        <span className="text-xs text-amber-500 ml-auto">{new Date(m.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-xs text-amber-800">&quot;{m.body}&quot;</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Quick capture */}
-              <Link
-                href="/capture"
-                className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-indigo-300 flex flex-col items-center gap-2 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-indigo-600" />
-                </div>
-                <p className="text-sm font-medium text-slate-700">Quick Capture</p>
-                <p className="text-xs text-slate-400">Photo, scan, or paste text</p>
-              </Link>
-
-              {/* Add assignment */}
-              <button
-                onClick={() => setShowAddAssignment(true)}
-                className="w-full bg-white rounded-xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-indigo-300 flex flex-col items-center gap-2 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-50 flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" />
-                </div>
-                <p className="text-sm font-medium text-slate-700">Add Assignment</p>
-                <p className="text-xs text-slate-400">Exam, quiz, or homework</p>
-              </button>
-            </div>
           </div>
         </div>
       </main>
