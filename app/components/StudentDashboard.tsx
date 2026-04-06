@@ -80,11 +80,18 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     ...Array(firstDayOfMonth).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  const assignmentsByDate = assignments.reduce<Record<string, number>>((acc, a) => {
+  // Per-date maps for calendar dot indicators
+  const assignmentTypesByDate = assignments.reduce<Record<string, Set<string>>>((acc, a) => {
     const d = a.due_date.slice(0, 10);
-    acc[d] = (acc[d] ?? 0) + 1;
+    if (!acc[d]) acc[d] = new Set();
+    acc[d].add(a.type);
     return acc;
   }, {});
+  const sessionDateSet = sessions.reduce<Set<string>>((acc, s) => {
+    acc.add(s.scheduled_date);
+    return acc;
+  }, new Set());
+
   const selectedDateAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === selectedDate);
   const selectedDateSessions = sessions.filter((s) => s.scheduled_date === selectedDate);
 
@@ -684,7 +691,9 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
-                const count = assignmentsByDate[dateStr] ?? 0;
+                const aTypes = assignmentTypesByDate[dateStr];
+                const hasSession = sessionDateSet.has(dateStr);
+                const hasDots = (aTypes && aTypes.size > 0) || hasSession;
                 return (
                   <button
                     key={i}
@@ -695,9 +704,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       ${!isToday && !isSelected ? "text-slate-700 hover:bg-slate-100" : ""}
                     `}
                   >
-                    {day}
-                    {count > 0 && (
-                      <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${isToday ? "bg-white/70" : "bg-rose-400"}`} />
+                    <span className="leading-none">{day}</span>
+                    {hasDots && (
+                      <span className="flex items-center gap-[2px] mt-[2px]">
+                        {aTypes?.has("exam")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-rose-500"}`} />}
+                        {aTypes?.has("quiz")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-amber-400"}`} />}
+                        {aTypes?.has("assignment") && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-indigo-400"}`} />}
+                        {hasSession                && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-teal-400"}`} />}
+                      </span>
                     )}
                   </button>
                 );
