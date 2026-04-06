@@ -192,10 +192,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     acc[d].add(a.type);
     return acc;
   }, {});
-  const sessionDateSet = sessions.reduce<Set<string>>((acc, s) => {
-    acc.add(s.scheduled_date);
+  const sessionTypesByDate = sessions.reduce<Record<string, Set<string>>>((acc, s) => {
+    if (!acc[s.scheduled_date]) acc[s.scheduled_date] = new Set();
+    acc[s.scheduled_date].add((s.type as string) ?? "study");
     return acc;
-  }, new Set());
+  }, {});
 
   const selectedDateAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === selectedDate);
   const selectedDateSessions = sessions.filter((s) => s.scheduled_date === selectedDate);
@@ -337,8 +338,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const assignmentsThisWeek = thisWeekAssignments.length;
   const assignmentsNextWeek = nextWeekAssignments.length;
 
-  const examsThisWeek = thisWeekAssignments.filter((a) => a.type === "exam").length;
-  const examsNextWeek = nextWeekAssignments.filter((a) => a.type === "exam").length;
+  const examsThisWeek = thisWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length;
+  const examsNextWeek = nextWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length;
 
   async function moveToClass(materialId: string, classId: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -472,7 +473,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Upcoming Exams */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Upcoming Exams</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Exams &amp; Quizzes</p>
               <div className="space-y-2.5">
                 <div className="flex items-baseline gap-2.5">
                   <span className={`text-3xl font-bold ${examsThisWeek > 0 ? "text-rose-500" : "text-slate-900"}`}>
@@ -804,8 +805,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
                 const aTypes = assignmentTypesByDate[dateStr];
-                const hasSession = sessionDateSet.has(dateStr);
-                const hasDots = (aTypes && aTypes.size > 0) || hasSession;
+                const sTypes = sessionTypesByDate[dateStr];
+                const hasDots = (aTypes && aTypes.size > 0) || (sTypes && sTypes.size > 0);
                 return (
                   <button
                     key={i}
@@ -822,7 +823,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                         {aTypes?.has("exam")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-rose-500"}`} />}
                         {aTypes?.has("quiz")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-amber-400"}`} />}
                         {aTypes?.has("assignment") && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-indigo-400"}`} />}
-                        {hasSession                && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-teal-400"}`} />}
+                        {sTypes?.has("study")      && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-teal-400"}`} />}
+                        {sTypes?.has("exam")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-rose-500"}`} />}
+                        {sTypes?.has("quiz")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-amber-400"}`} />}
+                        {sTypes?.has("assignment") && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-indigo-400"}`} />}
                       </span>
                     )}
                   </button>
