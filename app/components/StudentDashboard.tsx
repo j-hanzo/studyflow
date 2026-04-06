@@ -314,13 +314,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return Math.round((d.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
   }
 
+  // Tasks = study/assignment sessions only (exam & quiz sessions go to Exams & Quizzes)
   const tasksThisWeek = sessions.filter((s) => {
     const d = daysFromToday(s.scheduled_date);
-    return !s.completed && d >= 0 && d <= 6;
+    const t = (s.type as string) ?? "study";
+    return !s.completed && d >= 0 && d <= 6 && t !== "exam" && t !== "quiz";
   }).length;
   const tasksNextWeek = sessions.filter((s) => {
     const d = daysFromToday(s.scheduled_date);
-    return !s.completed && d >= 7 && d <= 13;
+    const t = (s.type as string) ?? "study";
+    return !s.completed && d >= 7 && d <= 13 && t !== "exam" && t !== "quiz";
   }).length;
 
   const thisWeekAssignments = assignments.filter((a) => {
@@ -338,8 +341,19 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const assignmentsThisWeek = thisWeekAssignments.length;
   const assignmentsNextWeek = nextWeekAssignments.length;
 
-  const examsThisWeek = thisWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length;
-  const examsNextWeek = nextWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length;
+  // Exams & Quizzes = assignment rows of those types + sessions tagged exam/quiz
+  const examSessionsThisWeek = sessions.filter((s) => {
+    const d = daysFromToday(s.scheduled_date);
+    const t = (s.type as string) ?? "study";
+    return !s.completed && d >= 0 && d <= 6 && (t === "exam" || t === "quiz");
+  }).length;
+  const examSessionsNextWeek = sessions.filter((s) => {
+    const d = daysFromToday(s.scheduled_date);
+    const t = (s.type as string) ?? "study";
+    return !s.completed && d >= 7 && d <= 13 && (t === "exam" || t === "quiz");
+  }).length;
+  const examsThisWeek = thisWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length + examSessionsThisWeek;
+  const examsNextWeek = nextWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length + examSessionsNextWeek;
 
   async function moveToClass(materialId: string, classId: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
