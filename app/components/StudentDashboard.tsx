@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   Camera, Bell, CheckCircle2, Clock, Sparkles,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
-  PanelLeft, CalendarDays, X,
+  CalendarDays, X,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
@@ -144,7 +144,27 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-50">
+
+      {/* ── Floating sidebar caret toggle ── */}
+      <button
+        onClick={() => setSidebarOpen((o) => !o)}
+        style={{ left: sidebarOpen ? "244px" : "12px" }}
+        className="fixed top-5 z-50 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center transition-[left] duration-300 ease-in-out hover:bg-slate-50"
+        title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+      >
+        <ChevronLeft className={`w-3 h-3 text-slate-500 transition-transform duration-300 ${sidebarOpen ? "" : "rotate-180"}`} />
+      </button>
+
+      {/* ── Floating calendar toggle ── */}
+      <button
+        onClick={() => setCalendarOpen((o) => !o)}
+        style={{ right: calendarOpen ? "324px" : "12px" }}
+        className="fixed top-5 z-50 w-6 h-6 rounded-md bg-white border border-slate-200 shadow-md flex items-center justify-center transition-[right] duration-300 ease-in-out hover:bg-slate-50"
+        title={calendarOpen ? "Hide calendar" : "Show calendar"}
+      >
+        <CalendarDays className={`w-3 h-3 ${calendarOpen ? "text-indigo-600" : "text-slate-500"}`} />
+      </button>
       {showAddClass && (
         <AddClassModal
           studentId={profile.id}
@@ -162,51 +182,33 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       )}
 
       {/* ── Left sidebar with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${sidebarOpen ? "w-64" : "w-0"}`}>
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${sidebarOpen ? "w-64" : "w-0"}`} style={{ transitionProperty: "width" }}>
         <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
       </div>
 
       <main className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Sidebar toggle */}
-            <button
-              onClick={() => setSidebarOpen((o) => !o)}
-              className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center flex-shrink-0 transition-colors"
-              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-            >
-              <PanelLeft className={`w-4 h-4 text-slate-600 transition-transform duration-300 ${sidebarOpen ? "" : "rotate-180"}`} />
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-slate-900 truncate">{greeting}, {firstName} 👋</h1>
-              <p className="text-sm text-slate-500 truncate">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                {profile.grade ? ` · ${profile.grade}` : ""}
-              </p>
-            </div>
+        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">{greeting}, {firstName} 👋</h1>
+            <p className="text-sm text-slate-500">
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              {profile.grade ? ` · ${profile.grade}` : ""}
+            </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3">
             <Link
               href="/capture"
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
               <Camera className="w-4 h-4" />
-              Capture
+              Upload Material
             </Link>
             <button className="relative w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
               <Bell className="w-4 h-4 text-slate-600" />
               {messages.length > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
               )}
-            </button>
-            {/* Calendar toggle */}
-            <button
-              onClick={() => setCalendarOpen((o) => !o)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${calendarOpen ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-100 hover:bg-slate-200"}`}
-              title={calendarOpen ? "Hide calendar" : "Show calendar"}
-            >
-              <CalendarDays className={`w-4 h-4 ${calendarOpen ? "text-white" : "text-slate-600"}`} />
             </button>
           </div>
         </header>
