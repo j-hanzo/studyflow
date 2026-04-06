@@ -11,7 +11,7 @@ import AddClassModal from "./AddClassModal";
 import AddAssignmentModal from "./AddAssignmentModal";
 import type { Profile, Class, Assignment, StudySession, Message, Material } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -52,6 +52,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // On mobile, default both panels to hidden
+  useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    if (isMobile) {
+      setSidebarOpen(false);
+      setCalendarOpen(false);
+    }
+  }, []);
 
   // Mini calendar state
   const todayStr = new Date().toISOString().slice(0, 10);
