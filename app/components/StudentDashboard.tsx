@@ -371,7 +371,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[#ECF5F5]">
 
       {/* ── Floating sidebar caret toggle ── */}
       <button
