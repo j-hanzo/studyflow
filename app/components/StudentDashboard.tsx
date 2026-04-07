@@ -438,63 +438,70 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
             {/* Materials to File */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Materials to File</p>
-              <p className="text-5xl font-bold text-slate-900">{materialsToFile}</p>
-              <p className="mt-3 text-xs text-slate-400">
-                {materialsToFile === 0 ? "All organized!" : materialsToFile === 1 ? "item needs filing" : "items need filing"}
-              </p>
+            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
+              <p className="text-[18px] font-bold uppercase text-[#595959]">Materials to File</p>
+              <div className="flex items-center gap-[4px]">
+                <span className="text-[23px] font-bold text-black">{materialsToFile}</span>
+                <span className="text-[15px] text-black">|</span>
+                <span className="text-[15px] text-black">
+                  {materialsToFile === 0 ? "all clear" : materialsToFile === 1 ? "to file" : "to file"}
+                </span>
+              </div>
             </div>
 
             {/* Tasks to Complete */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Tasks to Complete</p>
-              <div className="space-y-2.5">
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-bold text-slate-900">{tasksThisWeek}</span>
-                  <span className="text-sm text-slate-400 font-medium">| this week</span>
+            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
+              <p className="text-[18px] font-bold uppercase text-[#595959]">Tasks to Complete</p>
+              <div className="flex gap-1 w-full">
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{tasksThisWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">this week</span>
                 </div>
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-bold text-slate-300">{tasksNextWeek}</span>
-                  <span className="text-sm text-slate-300 font-medium">| next week</span>
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{tasksNextWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">next week</span>
                 </div>
               </div>
             </div>
 
             {/* Assignments Due */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Assignments Due</p>
-              <div className="space-y-2.5">
-                <div className="flex items-baseline gap-2.5">
-                  <span className={`text-3xl font-bold ${assignmentsThisWeek > 0 ? "text-amber-500" : "text-slate-900"}`}>
-                    {assignmentsThisWeek}
-                  </span>
-                  <span className="text-sm text-slate-400 font-medium">| this week</span>
+            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
+              <p className="text-[18px] font-bold uppercase text-[#595959]">Assignments Due</p>
+              <div className="flex gap-1 w-full">
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{assignmentsThisWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">this week</span>
                 </div>
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-bold text-slate-300">{assignmentsNextWeek}</span>
-                  <span className="text-sm text-slate-300 font-medium">| next week</span>
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{assignmentsNextWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">next week</span>
                 </div>
               </div>
             </div>
 
-            {/* Upcoming Exams */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Exams &amp; Quizzes</p>
-              <div className="space-y-2.5">
-                <div className="flex items-baseline gap-2.5">
-                  <span className={`text-3xl font-bold ${examsThisWeek > 0 ? "text-rose-500" : "text-slate-900"}`}>
-                    {examsThisWeek}
-                  </span>
-                  <span className="text-sm text-slate-400 font-medium">| this week</span>
+            {/* Exams & Quizzes */}
+            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
+              <p className="text-[18px] font-bold uppercase text-[#595959]">Exams &amp; Quizzes</p>
+              <div className="flex gap-1 w-full">
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{examsThisWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">this week</span>
                 </div>
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-3xl font-bold text-slate-300">{examsNextWeek}</span>
-                  <span className="text-sm text-slate-300 font-medium">| next week</span>
+                <div className="flex flex-1 items-center gap-[4px]">
+                  <span className="text-[23px] font-bold text-black">{examsNextWeek}</span>
+                  <span className="text-[15px] text-black">|</span>
+                  <span className="text-[15px] text-black">next week</span>
                 </div>
               </div>
             </div>
+
           </div>
 
           {/* ── Recently Uploaded Materials ── */}
