@@ -289,7 +289,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     const h = Math.floor(totalMins / 60);
     const m = totalMins % 60;
     const label = m === 0
-      ? `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`
+      ? `${String(h).padStart(2, "0")}:00`
       : "";
     return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
   });
@@ -383,15 +383,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <ChevronLeft className={`w-3 h-3 text-slate-500 transition-transform duration-300 ${sidebarOpen ? "" : "rotate-180"}`} />
       </button>
 
-      {/* ── Floating calendar toggle ── */}
-      <button
-        onClick={() => setCalendarOpen((o) => !o)}
-        style={{ right: calendarOpen ? "324px" : "12px" }}
-        className="fixed top-5 z-50 w-6 h-6 rounded-md bg-white border border-slate-200 shadow-md flex items-center justify-center transition-[right] duration-300 ease-in-out hover:bg-slate-50"
-        title={calendarOpen ? "Hide calendar" : "Show calendar"}
-      >
-        <CalendarDays className={`w-3 h-3 ${calendarOpen ? "text-indigo-600" : "text-slate-500"}`} />
-      </button>
+      {/* ── Floating calendar toggle (only when panel is closed) ── */}
+      {!calendarOpen && (
+        <button
+          onClick={() => setCalendarOpen(true)}
+          className="fixed top-5 right-3 z-50 w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-md flex items-center justify-center hover:bg-slate-50"
+          title="Show calendar"
+        >
+          <CalendarDays className="w-5 h-5 text-slate-500" />
+        </button>
+      )}
       {showAddClass && (
         <AddClassModal
           studentId={profile.id}
@@ -681,49 +682,58 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       </main>
 
       {/* ── Right calendar panel with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-80" : "w-0"}`}>
-        <div className="w-80 min-h-screen bg-white border-l border-slate-200 flex flex-col">
-          {/* Panel header */}
-          <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-            <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Calendar</p>
-              <p className="text-sm font-bold text-slate-900">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-              </p>
-            </div>
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-[420px]" : "w-0"}`}>
+        <div className="w-[420px] min-h-screen bg-white border-l border-slate-200 flex flex-col">
+
+          {/* ── Top section: calendar toggle icon ── */}
+          <div className="px-[40px] pt-[40px] pb-[40px] border-b border-[#bebebe] flex justify-end flex-shrink-0">
             <button
               onClick={() => setCalendarOpen(false)}
-              className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"
+              title="Hide calendar"
             >
-              <X className="w-4 h-4 text-slate-400" />
+              <CalendarDays className="w-8 h-8 text-slate-700" />
             </button>
           </div>
 
-          {/* Mini month calendar */}
-          <div className="px-4 py-4 border-b border-slate-100 flex-shrink-0">
-            {/* Month nav */}
-            <div className="flex items-center justify-between mb-3">
-              <button onClick={prevMonth} className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center">
-                <ChevronLeft className="w-4 h-4 text-slate-500" />
-              </button>
-              <p className="text-sm font-semibold text-slate-900">{MONTH_NAMES[viewMonth]} {viewYear}</p>
-              <button onClick={nextMonth} className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center">
-                <ChevronRight className="w-4 h-4 text-slate-500" />
-              </button>
+          {/* ── Month section ── */}
+          <div className="px-[40px] py-[40px] border-b border-[#bebebe] flex flex-col gap-[25px] flex-shrink-0">
+
+            {/* Date header + month nav */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="text-[28px] font-bold text-black leading-none whitespace-nowrap">
+                  {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}
+                </span>
+                <span className="text-[28px] font-normal text-black leading-none whitespace-nowrap">
+                  {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
+                </span>
+              </div>
+              <div className="flex items-center gap-0 flex-shrink-0 ml-2">
+                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
+                  <ChevronLeft className="w-7 h-7 text-black" />
+                </button>
+                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
+                  <ChevronRight className="w-7 h-7 text-black" />
+                </button>
+              </div>
             </div>
+
             {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 mb-1">
-              {["S","M","T","W","T","F","S"].map((d, i) => (
-                <div key={i} className="text-center text-[10px] font-semibold text-slate-400">{d}</div>
+            <div className="grid grid-cols-7">
+              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
+                <div key={i} className="text-center text-[18px] text-[#595959]">{d}</div>
               ))}
             </div>
+
             {/* Day cells */}
-            <div className="grid grid-cols-7 gap-y-0.5">
+            <div className="grid grid-cols-7">
               {calendarCells.map((day, i) => {
-                if (!day) return <div key={i} />;
+                if (!day) return <div key={i} className="h-[46px]" />;
                 const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
+                const isHighlighted = isToday || isSelected;
                 const aTypes = assignmentTypesByDate[dateStr];
                 const sTypes = sessionTypesByDate[dateStr];
                 const hasDots = (aTypes && aTypes.size > 0) || (sTypes && sTypes.size > 0);
@@ -731,22 +741,22 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   <button
                     key={i}
                     onClick={() => setSelectedDate(dateStr)}
-                    className={`relative flex flex-col items-center justify-center h-8 rounded-lg text-xs font-medium transition-all
-                      ${isToday ? "bg-indigo-600 text-white" : ""}
-                      ${isSelected && !isToday ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-300" : ""}
-                      ${!isToday && !isSelected ? "text-slate-700 hover:bg-slate-100" : ""}
-                    `}
+                    className="flex flex-col items-center justify-center h-[46px] hover:bg-slate-50 rounded-lg transition-colors"
                   >
-                    <span className="leading-none">{day}</span>
+                    <span className={`text-[18px] leading-none ${
+                      isHighlighted ? "font-bold text-[#e63946]" : "font-normal text-black"
+                    }`}>
+                      {day}
+                    </span>
                     {hasDots && (
-                      <span className="flex items-center gap-[2px] mt-[2px]">
-                        {aTypes?.has("exam")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-rose-500"}`} />}
-                        {aTypes?.has("quiz")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-amber-400"}`} />}
-                        {aTypes?.has("assignment") && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-indigo-400"}`} />}
-                        {sTypes?.has("study")      && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-teal-400"}`} />}
-                        {sTypes?.has("exam")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-rose-500"}`} />}
-                        {sTypes?.has("quiz")       && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-amber-400"}`} />}
-                        {sTypes?.has("assignment") && <span className={`w-1 h-1 rounded-full ${isToday ? "bg-white/80" : "bg-indigo-400"}`} />}
+                      <span className="flex items-center gap-[3px] mt-[5px]">
+                        {aTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
+                        {aTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
+                        {aTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
+                        {sTypes?.has("study")      && <span className="w-[5px] h-[5px] rounded-full bg-teal-400" />}
+                        {sTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
+                        {sTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
+                        {sTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
                       </span>
                     )}
                   </button>
@@ -755,29 +765,30 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
           </div>
 
-          {/* Daily timeline */}
+          {/* ── Daily timeline ── */}
           <div className="flex-1 overflow-y-auto">
-            {/* Day header */}
-            <div className="px-4 py-2.5 flex items-center justify-between border-b border-slate-100 flex-shrink-0 sticky top-0 bg-white z-10">
-              <p className="text-xs font-semibold text-slate-700">
+
+            {/* Day sub-header */}
+            <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-[#bebebe]">
+              <p className="text-[18px] font-bold text-black">
                 {selectedDate === todayStr
                   ? "Today"
-                  : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
               </p>
               <button
                 onClick={() => openPopoverNew("09:00")}
-                className="text-[10px] text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-0.5"
+                className="flex items-center gap-1 text-[15px] text-indigo-600 font-semibold hover:text-indigo-800"
               >
-                <Plus className="w-3 h-3" /> Add
+                <Plus className="w-4 h-4" /> Add
               </button>
             </div>
 
             {/* Assignments due banner */}
             {selectedDateAssignments.length > 0 && (
-              <div className="px-4 py-2 border-b border-amber-100 bg-amber-50 space-y-1 flex-shrink-0">
+              <div className="px-[40px] py-3 border-b border-amber-100 bg-amber-50 space-y-1.5 flex-shrink-0">
                 {selectedDateAssignments.map((a) => (
-                  <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-400" : "bg-amber-400"}`} />
+                  <div key={a.id} className="flex items-center gap-2 text-[13px]">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-400" : "bg-amber-400"}`} />
                     <span className="font-medium text-slate-700 truncate">{a.title}</span>
                     <span className={`ml-auto flex-shrink-0 font-semibold ${a.type === "exam" ? "text-rose-500" : "text-amber-600"}`}>
                       {a.type} due
@@ -793,12 +804,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 <div
                   key={i}
                   onClick={() => { if (!dragRef.current?.moved) openPopoverNew(slot.timeStr); }}
-                  className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/30 cursor-pointer transition-colors flex items-start"
+                  className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/20 cursor-pointer transition-colors flex items-start"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className="text-[9px] text-slate-400 w-12 pl-3 pt-1 flex-shrink-0 select-none">
-                    {slot.label}
+                  <span className={`text-[18px] text-[#595959] pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
+                    {slot.label || "·"}
                   </span>
+                  {slot.label && (
+                    <span className="absolute left-[120px] right-[40px] top-1/2 border-t border-slate-200 opacity-50" />
+                  )}
                 </div>
               ))}
 
@@ -818,32 +832,33 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       dragRef.current = { sessionId: s.id, startY: e.pageY, origTop, currentTop: origTop, moved: false };
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className={`absolute left-12 right-2 rounded-lg px-2 py-1 border select-none transition-shadow
-                      ${isDragging ? "shadow-lg cursor-grabbing z-20 opacity-90" : "cursor-grab hover:shadow-sm"}
+                    className={`absolute rounded-[20px] px-4 py-2 border-4 select-none transition-shadow
+                      ${isDragging ? "shadow-xl cursor-grabbing z-20 opacity-90" : "cursor-grab hover:shadow-md"}
                       ${sessionBlockClasses(sType, s.completed)}`}
-                    style={{ top: top + 1, height: height - 2 }}
+                    style={{ top: top + 2, height: height - 4, left: "120px", right: "40px" }}
                   >
-                    <p className={`text-[10px] font-semibold truncate leading-tight ${sessionTextClass(sType)}`}>{s.title}</p>
-                    {height >= 36 && (
-                      <p className={`text-[9px] mt-0.5 ${sessionSubTextClass(sType)}`}>
+                    <p className={`text-[13px] font-bold truncate leading-tight ${sessionTextClass(sType)}`}>{s.title}</p>
+                    {height >= 40 && (
+                      <p className={`text-[12px] mt-0.5 ${sessionSubTextClass(sType)}`}>
                         {s.start_time?.slice(0, 5) ?? "09:00"} · {s.duration_minutes}m
                       </p>
                     )}
-                    {s.completed && height >= 36 && (
-                      <p className="text-[9px] text-emerald-600 font-semibold">Done ✓</p>
+                    {s.completed && height >= 40 && (
+                      <p className="text-[11px] text-emerald-600 font-semibold">Done ✓</p>
                     )}
                   </div>
                 );
               })}
             </div>
+
+            {/* Footer link */}
+            <div className="px-[40px] py-5 border-t border-[#bebebe]">
+              <Link href="/calendar" className="text-[15px] text-indigo-600 font-medium hover:underline flex items-center gap-1">
+                Open full calendar <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-4 py-3 border-t border-slate-100 flex-shrink-0">
-            <Link href="/calendar" className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
-              Open full calendar <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
         </div>
       </div>
 
