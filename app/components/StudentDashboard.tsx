@@ -682,8 +682,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       </main>
 
       {/* ── Right calendar panel with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-[420px]" : "w-0"}`}>
-        <div className="w-[420px] min-h-screen bg-white border-l border-slate-200 flex flex-col">
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-[640px]" : "w-0"}`}>
+        <div className="w-[640px] min-h-screen bg-white border-l border-slate-200 flex flex-col">
 
           {/* ── Top section: calendar toggle icon ── */}
           <div className="px-[40px] pt-[40px] pb-[40px] border-b border-[#bebebe] flex justify-end flex-shrink-0">
@@ -722,7 +722,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7">
               {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
-                <div key={i} className="text-center text-[18px] text-[#595959]">{d}</div>
+                <div key={i} className="text-center text-[16px] text-[#595959]">{d}</div>
               ))}
             </div>
 
@@ -743,7 +743,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                     onClick={() => setSelectedDate(dateStr)}
                     className="flex flex-col items-center justify-center h-[46px] hover:bg-slate-50 rounded-lg transition-colors"
                   >
-                    <span className={`text-[18px] leading-none ${
+                    <span className={`text-[16px] leading-none ${
                       isHighlighted ? "font-bold text-[#e63946]" : "font-normal text-black"
                     }`}>
                       {day}
@@ -770,7 +770,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Day sub-header */}
             <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-[#bebebe]">
-              <p className="text-[18px] font-bold text-black">
+              <p className="text-[16px] font-bold text-black">
                 {selectedDate === todayStr
                   ? "Today"
                   : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
@@ -807,7 +807,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/20 cursor-pointer transition-colors flex items-start"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className={`text-[18px] text-[#595959] pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
+                  <span className={`text-[16px] text-[#595959] pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
                     {slot.label || "·"}
                   </span>
                   {slot.label && (
