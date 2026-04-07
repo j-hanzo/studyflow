@@ -682,8 +682,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       </main>
 
       {/* ── Right calendar panel with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${calendarOpen ? "w-[640px]" : "w-0"}`}>
-        <div className="w-[640px] min-h-screen bg-white border-l border-slate-200 flex flex-col">
+      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}>
+        <div className="w-[640px] h-full bg-white border-l border-slate-200 flex flex-col overflow-hidden">
 
           {/* ── Top section: calendar toggle icon ── */}
           <div className="px-[40px] pt-[40px] pb-[40px] border-b border-[#bebebe] flex justify-end flex-shrink-0">
@@ -766,7 +766,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           </div>
 
           {/* ── Daily timeline ── */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
 
             {/* Day sub-header */}
             <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-[#bebebe]">
