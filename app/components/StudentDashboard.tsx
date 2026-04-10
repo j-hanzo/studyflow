@@ -381,7 +381,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <Image src="/icons/left-panel-show-hide.svg" alt="" width={32} height={32} />
+        <Image src="/icons/left-panel-show-hide.svg" alt="" width={48} height={48} />
       </button>
 
       {/* ── Floating calendar toggle (sits at left edge of panel, like sidebar toggle) ── */}
@@ -391,7 +391,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
         title={calendarOpen ? "Hide calendar" : "Show calendar"}
       >
-        <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
+        <Image src="/icons/calendar-show-hide.svg" alt="" width={48} height={48} />
       </button>
       {showAddClass && (
         <AddClassModal
@@ -416,7 +416,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
       <main className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-20 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">{greeting}, {firstName} 👋</h1>
             <p className="text-sm text-white/50">
@@ -435,7 +435,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           </div>
         </header>
 
-        <div className="px-20 py-6 space-y-8">
+        <div className="px-8 py-6 space-y-8">
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
