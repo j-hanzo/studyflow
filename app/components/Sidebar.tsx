@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen, Calendar, Camera, Home, MessageCircle,
-  Bell, Users, GraduationCap, ChevronRight, Sparkles, LogOut, FlipHorizontal,
+  Bell, Users, ChevronRight, Sparkles, LogOut, FlipHorizontal,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Class } from "@/lib/supabase/types";
@@ -68,12 +69,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
     <aside className="w-64 min-h-screen bg-[#0A2637]/75 border-r border-white/10 flex flex-col flex-shrink-0">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-white">Lumen</span>
-        </div>
+        <Image src="/icons/lumen-logo.svg" alt="Lumen" width={130} height={38} priority />
       </div>
 
       {/* Mode switcher */}

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   Camera, CheckCircle2,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
-  CalendarDays, X, Trash2,
+  X, Trash2,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AddClassModal from "./AddClassModal";
@@ -373,24 +374,24 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   return (
     <div className="flex min-h-screen blob-gradient-bg">
 
-      {/* ── Floating sidebar caret toggle ── */}
+      {/* ── Floating sidebar toggle ── */}
       <button
         onClick={() => setSidebarOpen((o) => !o)}
         style={{ left: sidebarOpen ? "244px" : "12px" }}
-        className="fixed top-5 z-50 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center transition-[left] duration-300 ease-in-out hover:bg-slate-50"
+        className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <ChevronLeft className={`w-3 h-3 text-slate-500 transition-transform duration-300 ${sidebarOpen ? "" : "rotate-180"}`} />
+        <Image src="/icons/left-panel-show-hide.svg" alt="" width={32} height={32} />
       </button>
 
       {/* ── Floating calendar toggle (only when panel is closed) ── */}
       {!calendarOpen && (
         <button
           onClick={() => setCalendarOpen(true)}
-          className="fixed top-5 right-3 z-50 w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-md flex items-center justify-center hover:bg-slate-50"
+          className="fixed top-5 right-3 z-50"
           title="Show calendar"
         >
-          <CalendarDays className="w-5 h-5 text-slate-500" />
+          <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
         </button>
       )}
       {showAddClass && (
@@ -689,10 +690,9 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <div className="px-[40px] pt-[40px] pb-[40px] border-b border-white/10 flex justify-end flex-shrink-0">
             <button
               onClick={() => setCalendarOpen(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
               title="Hide calendar"
             >
-              <CalendarDays className="w-8 h-8 text-white" />
+              <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
             </button>
           </div>
 
