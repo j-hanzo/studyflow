@@ -416,10 +416,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
       <main className="flex-1 overflow-auto min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">{greeting}, {firstName} 👋</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-xl font-bold text-white">{greeting}, {firstName} 👋</h1>
+            <p className="text-sm text-white/50">
               {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               {profile.grade ? ` · ${profile.grade}` : ""}
             </p>
@@ -683,38 +683,38 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
       {/* ── Right calendar panel with slide animation ── */}
       <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}>
-        <div className="w-[640px] h-full bg-white border-l border-slate-200 flex flex-col overflow-hidden">
+        <div className="w-[640px] h-full bg-[#0A2637]/75 border-l border-white/10 flex flex-col overflow-hidden">
 
           {/* ── Top section: calendar toggle icon ── */}
-          <div className="px-[40px] pt-[40px] pb-[40px] border-b border-[#bebebe] flex justify-end flex-shrink-0">
+          <div className="px-[40px] pt-[40px] pb-[40px] border-b border-white/10 flex justify-end flex-shrink-0">
             <button
               onClick={() => setCalendarOpen(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
               title="Hide calendar"
             >
-              <CalendarDays className="w-8 h-8 text-slate-700" />
+              <CalendarDays className="w-8 h-8 text-white" />
             </button>
           </div>
 
           {/* ── Month section ── */}
-          <div className="px-[40px] py-[40px] border-b border-[#bebebe] flex flex-col gap-[25px] flex-shrink-0">
+          <div className="px-[40px] py-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
 
             {/* Date header + month nav */}
             <div className="flex items-center justify-between">
               <div className="flex items-baseline gap-2 min-w-0">
-                <span className="text-[28px] font-bold text-black leading-none whitespace-nowrap">
+                <span className="text-[28px] font-bold text-white leading-none whitespace-nowrap">
                   {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}
                 </span>
-                <span className="text-[28px] font-normal text-black leading-none whitespace-nowrap">
+                <span className="text-[28px] font-normal text-white/70 leading-none whitespace-nowrap">
                   {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
               </div>
               <div className="flex items-center gap-0 flex-shrink-0 ml-2">
-                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
-                  <ChevronLeft className="w-7 h-7 text-black" />
+                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors">
+                  <ChevronLeft className="w-7 h-7 text-white" />
                 </button>
-                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors">
-                  <ChevronRight className="w-7 h-7 text-black" />
+                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors">
+                  <ChevronRight className="w-7 h-7 text-white" />
                 </button>
               </div>
             </div>
@@ -722,7 +722,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7">
               {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
-                <div key={i} className="text-center text-[16px] text-[#595959]">{d}</div>
+                <div key={i} className="text-center text-[16px] text-white/50">{d}</div>
               ))}
             </div>
 
@@ -741,10 +741,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   <button
                     key={i}
                     onClick={() => setSelectedDate(dateStr)}
-                    className="flex flex-col items-center justify-center h-[46px] hover:bg-slate-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center justify-center h-[46px] hover:bg-white/10 rounded-lg transition-colors"
                   >
                     <span className={`text-[16px] leading-none ${
-                      isHighlighted ? "font-bold text-[#e63946]" : "font-normal text-black"
+                      isHighlighted ? "font-bold text-[#4ade80]" : "font-normal text-white"
                     }`}>
                       {day}
                     </span>
@@ -769,15 +769,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <div className="flex-1 overflow-y-auto min-h-0">
 
             {/* Day sub-header */}
-            <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-white z-10 border-b border-[#bebebe]">
-              <p className="text-[16px] font-bold text-black">
+            <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-[#0A2637] z-10 border-b border-white/10">
+              <p className="text-[16px] font-bold text-white">
                 {selectedDate === todayStr
                   ? "Today"
                   : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
               </p>
               <button
                 onClick={() => openPopoverNew("09:00")}
-                className="flex items-center gap-1 text-[15px] text-indigo-600 font-semibold hover:text-indigo-800"
+                className="flex items-center gap-1 text-[15px] text-indigo-400 font-semibold hover:text-indigo-300"
               >
                 <Plus className="w-4 h-4" /> Add
               </button>
@@ -785,12 +785,12 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Assignments due banner */}
             {selectedDateAssignments.length > 0 && (
-              <div className="px-[40px] py-3 border-b border-amber-100 bg-amber-50 space-y-1.5 flex-shrink-0">
+              <div className="px-[40px] py-3 border-b border-amber-500/20 bg-amber-500/10 space-y-1.5 flex-shrink-0">
                 {selectedDateAssignments.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 text-[13px]">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-400" : "bg-amber-400"}`} />
-                    <span className="font-medium text-slate-700 truncate">{a.title}</span>
-                    <span className={`ml-auto flex-shrink-0 font-semibold ${a.type === "exam" ? "text-rose-500" : "text-amber-600"}`}>
+                    <span className="font-medium text-white/80 truncate">{a.title}</span>
+                    <span className={`ml-auto flex-shrink-0 font-semibold ${a.type === "exam" ? "text-rose-400" : "text-amber-400"}`}>
                       {a.type} due
                     </span>
                   </div>
@@ -804,14 +804,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 <div
                   key={i}
                   onClick={() => { if (!dragRef.current?.moved) openPopoverNew(slot.timeStr); }}
-                  className="absolute left-0 right-0 border-b border-slate-100 hover:bg-indigo-50/20 cursor-pointer transition-colors flex items-start"
+                  className="absolute left-0 right-0 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors flex items-start"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className={`text-[16px] text-[#595959] pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
+                  <span className={`text-[16px] text-white/40 pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
                     {slot.label || "·"}
                   </span>
                   {slot.label && (
-                    <span className="absolute left-[120px] right-[40px] top-1/2 border-t border-slate-200 opacity-50" />
+                    <span className="absolute left-[120px] right-[40px] top-1/2 border-t border-white/10" />
                   )}
                 </div>
               ))}
@@ -844,7 +844,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       </p>
                     )}
                     {s.completed && height >= 40 && (
-                      <p className="text-[11px] text-emerald-600 font-semibold">Done ✓</p>
+                      <p className="text-[11px] text-emerald-400 font-semibold">Done ✓</p>
                     )}
                   </div>
                 );
@@ -852,8 +852,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Footer link */}
-            <div className="px-[40px] py-5 border-t border-[#bebebe]">
-              <Link href="/calendar" className="text-[15px] text-indigo-600 font-medium hover:underline flex items-center gap-1">
+            <div className="px-[40px] py-5 border-t border-white/10">
+              <Link href="/calendar" className="text-[15px] text-indigo-400 font-medium hover:underline flex items-center gap-1">
                 Open full calendar <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
