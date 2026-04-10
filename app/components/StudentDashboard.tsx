@@ -384,16 +384,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <Image src="/icons/left-panel-show-hide.svg" alt="" width={32} height={32} />
       </button>
 
-      {/* ── Floating calendar toggle (only when panel is closed) ── */}
-      {!calendarOpen && (
-        <button
-          onClick={() => setCalendarOpen(true)}
-          className="fixed top-5 right-3 z-50"
-          title="Show calendar"
-        >
-          <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
-        </button>
-      )}
+      {/* ── Floating calendar toggle (sits at left edge of panel, like sidebar toggle) ── */}
+      <button
+        onClick={() => setCalendarOpen((o) => !o)}
+        style={{ right: calendarOpen ? "628px" : "12px" }}
+        className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
+        title={calendarOpen ? "Hide calendar" : "Show calendar"}
+      >
+        <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
+      </button>
       {showAddClass && (
         <AddClassModal
           studentId={profile.id}
@@ -686,18 +685,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}>
         <div className="w-[640px] h-full bg-[#0A2637]/75 border-l border-white/10 flex flex-col overflow-hidden">
 
-          {/* ── Top section: calendar toggle icon ── */}
-          <div className="px-[40px] pt-[40px] pb-[40px] border-b border-white/10 flex justify-end flex-shrink-0">
-            <button
-              onClick={() => setCalendarOpen(false)}
-              title="Hide calendar"
-            >
-              <Image src="/icons/calendar-show-hide.svg" alt="" width={32} height={32} />
-            </button>
-          </div>
-
           {/* ── Month section ── */}
-          <div className="px-[40px] py-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
+          <div className="px-[40px] pt-[20px] pb-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
 
             {/* Date header + month nav */}
             <div className="flex items-center justify-between">
