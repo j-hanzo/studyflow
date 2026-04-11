@@ -87,6 +87,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(true);
+  const [calendarExpanded, setCalendarExpanded] = useState(true);
 
   // On mobile, default both panels to hidden
   useEffect(() => {
@@ -186,6 +187,21 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     ...Array(firstDayOfMonth).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
+  // Pad to complete last row
+  const calendarRows: (number | null)[][] = [];
+  for (let i = 0; i < calendarCells.length; i += 7) {
+    const row = calendarCells.slice(i, i + 7);
+    while (row.length < 7) row.push(null);
+    calendarRows.push(row);
+  }
+  // Find the row containing the selected date for week-strip view
+  const selectedDay = new Date(selectedDate + "T00:00:00");
+  const isCurrentMonth = selectedDay.getFullYear() === viewYear && selectedDay.getMonth() === viewMonth;
+  const selectedDayNum = isCurrentMonth ? selectedDay.getDate() : null;
+  const activeRowIdx = selectedDayNum
+    ? calendarRows.findIndex((row) => row.includes(selectedDayNum))
+    : 0;
+  const visibleRows = calendarExpanded ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
   // Per-date maps for calendar dot indicators
   const assignmentTypesByDate = assignments.reduce<Record<string, Set<string>>>((acc, a) => {
     const d = a.due_date.slice(0, 10);
@@ -715,43 +731,58 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               ))}
             </div>
 
-            {/* Day cells */}
-            <div className="grid grid-cols-7">
-              {calendarCells.map((day, i) => {
-                if (!day) return <div key={i} className="h-[46px]" />;
-                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isToday = dateStr === todayStr;
-                const isSelected = dateStr === selectedDate;
-                const isHighlighted = isToday || isSelected;
-                const aTypes = assignmentTypesByDate[dateStr];
-                const sTypes = sessionTypesByDate[dateStr];
-                const hasDots = (aTypes && aTypes.size > 0) || (sTypes && sTypes.size > 0);
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedDate(dateStr)}
-                    className="flex flex-col items-center justify-center h-[46px] hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <span className={`text-[16px] leading-none ${
-                      isHighlighted ? "font-bold text-[#4ade80]" : "font-normal text-white"
-                    }`}>
-                      {day}
-                    </span>
-                    {hasDots && (
-                      <span className="flex items-center gap-[3px] mt-[5px]">
-                        {aTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
-                        {aTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
-                        {aTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
-                        {sTypes?.has("study")      && <span className="w-[5px] h-[5px] rounded-full bg-teal-400" />}
-                        {sTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
-                        {sTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
-                        {sTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            {/* Day cells — collapsible month/week */}
+            <div className="transition-all duration-300 ease-in-out overflow-hidden" style={{ maxHeight: calendarExpanded ? `${calendarRows.length * 46}px` : "46px" }}>
+              {visibleRows.map((row, rowIdx) => (
+                <div key={rowIdx} className="grid grid-cols-7">
+                  {row.map((day, colIdx) => {
+                    if (!day) return <div key={colIdx} className="h-[46px]" />;
+                    const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === selectedDate && !isToday;
+                    const aTypes = assignmentTypesByDate[dateStr];
+                    const sTypes = sessionTypesByDate[dateStr];
+                    const hasDots = (aTypes && aTypes.size > 0) || (sTypes && sTypes.size > 0);
+                    return (
+                      <button
+                        key={colIdx}
+                        onClick={() => setSelectedDate(dateStr)}
+                        className="flex flex-col items-center justify-start pt-[6px] h-[46px] hover:bg-white/10 rounded-lg transition-colors"
+                      >
+                        <span className={`w-[30px] h-[30px] flex items-center justify-center rounded-full text-[16px] leading-none
+                          ${isToday ? "bg-black text-white font-bold" : ""}
+                          ${isSelected ? "ring-2 ring-white/40 font-bold text-white" : ""}
+                          ${!isToday && !isSelected ? "font-normal text-white" : ""}
+                        `}>
+                          {day}
+                        </span>
+                        <span className="flex items-center gap-[3px] h-[5px] mt-[1px]">
+                          {hasDots && (
+                            <>
+                              {aTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
+                              {aTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
+                              {aTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
+                              {sTypes?.has("study")      && <span className="w-[5px] h-[5px] rounded-full bg-teal-400" />}
+                              {sTypes?.has("exam")       && <span className="w-[5px] h-[5px] rounded-full bg-rose-500" />}
+                              {sTypes?.has("quiz")       && <span className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
+                              {sTypes?.has("assignment") && <span className="w-[5px] h-[5px] rounded-full bg-indigo-400" />}
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
+
+            {/* Expand/collapse handle */}
+            <button
+              onClick={() => setCalendarExpanded((v) => !v)}
+              className="w-full flex justify-center pt-2"
+            >
+              <div className={`w-8 h-1 rounded-full bg-white/30 hover:bg-white/50 transition-colors`} />
+            </button>
           </div>
 
           {/* ── Daily timeline ── */}
