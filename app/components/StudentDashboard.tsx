@@ -120,6 +120,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return () => ro.disconnect();
   }, []);
 
+  // Wide-screen detection — above 1600px the body respects the panel width
+  const [isWideScreen, setIsWideScreen] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1600px)");
+    setIsWideScreen(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsWideScreen(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   // Table state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"due_date" | "status">("due_date");
@@ -458,7 +468,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       </div>
 
       {/* ── Main area ── */}
-      <main className="flex-1 overflow-auto min-w-0">
+      <main
+        className="flex-1 overflow-auto min-w-0 transition-[margin-right] duration-300 ease-in-out"
+        style={{ marginRight: calendarOpen && isWideScreen ? `${calendarW}px` : 0 }}
+      >
 
         {/* ── Header ── */}
         <header className="sticky top-0 z-10 px-[clamp(32px,3.5vw,56px)]">
