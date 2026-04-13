@@ -563,13 +563,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Assignments to Complete
               </p>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{assignmentsThisWeek}</h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
-              </div>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{assignmentsNextWeek}</h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              <div className="flex items-baseline flex-wrap gap-x-6 gap-y-2">
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{assignmentsThisWeek}</h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| this week</p>
+                </span>
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{assignmentsNextWeek}</h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| next week</p>
+                </span>
               </div>
             </div>
 
@@ -578,13 +580,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Study Hours to Do
               </p>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{studyHoursThisWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
-              </div>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{studyHoursNextWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              <div className="flex items-baseline flex-wrap gap-x-6 gap-y-2">
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{studyHoursThisWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| this week</p>
+                </span>
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{studyHoursNextWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| next week</p>
+                </span>
               </div>
             </div>
 
@@ -593,13 +597,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Upcoming Exams
               </p>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{examsThisWeek}</h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
-              </div>
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-medium text-white leading-none">{examsNextWeek}</h2>
-                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              <div className="flex items-baseline flex-wrap gap-x-6 gap-y-2">
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{examsThisWeek}</h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| this week</p>
+                </span>
+                <span className="flex items-baseline gap-2">
+                  <h2 className="font-medium text-white leading-none">{examsNextWeek}</h2>
+                  <p className="text-[19px] font-light text-[#BFBCBC]">| next week</p>
+                </span>
               </div>
             </div>
 
