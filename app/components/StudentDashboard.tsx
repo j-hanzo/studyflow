@@ -419,7 +419,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={44} height={44} />
+        <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={44} height={44} className="w-[clamp(32px,2.7vw,44px)] h-[clamp(32px,2.7vw,44px)]" />
       </button>
 
       {/* ── Floating calendar toggle — midpoint sits on panel left edge ── */}
@@ -429,7 +429,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
         title={calendarOpen ? "Hide calendar" : "Show calendar"}
       >
-        <Image src="/icons/icon-show-hide-calendar-panel.svg" alt="" width={44} height={44} />
+        <Image src="/icons/icon-show-hide-calendar-panel.svg" alt="" width={44} height={44} className="w-[clamp(32px,2.7vw,44px)] h-[clamp(32px,2.7vw,44px)]" />
       </button>
 
       {/* ── Modals ── */}
