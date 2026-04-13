@@ -390,15 +390,40 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return Math.max(mins / 30 * SLOT_H, SLOT_H * 0.6);
   }
 
-  // ── New stat computations ────────────────────────────────────────
-  const assignmentsToComplete = assignments.filter((a) => !a.completed).length;
-  const studyMinsToDo = sessions
-    .filter((s) => !s.completed && ((s.type as string) === "study" || !(s.type as string)))
-    .reduce((sum, s) => sum + s.duration_minutes, 0);
-  const studyHoursToDo = Math.round(studyMinsToDo / 60 * 10) / 10;
-  const upcomingExams = assignments.filter(
-    (a) => !a.completed && (a.type === "exam" || a.type === "quiz") && daysUntil(a.due_date) >= 0
-  ).length;
+  // ── Week boundary helpers ────────────────────────────────────────
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const dayOfWeek = todayDate.getDay(); // 0=Sun
+  const thisWeekStart = new Date(todayDate);
+  thisWeekStart.setDate(todayDate.getDate() - dayOfWeek);
+  const thisWeekEnd = new Date(thisWeekStart);
+  thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
+  const nextWeekStart = new Date(thisWeekEnd);
+  nextWeekStart.setDate(thisWeekEnd.getDate() + 1);
+  const nextWeekEnd = new Date(nextWeekStart);
+  nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+
+  function inThisWeek(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00"); return d >= thisWeekStart && d <= thisWeekEnd;
+  }
+  function inNextWeek(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00"); return d >= nextWeekStart && d <= nextWeekEnd;
+  }
+
+  // ── Stat computations ──────────────────────────────────────────
+  const pendingAssignments = assignments.filter((a) => !a.completed);
+  const assignmentsThisWeek = pendingAssignments.filter((a) => inThisWeek(a.due_date)).length;
+  const assignmentsNextWeek = pendingAssignments.filter((a) => inNextWeek(a.due_date)).length;
+
+  const pendingStudy = sessions.filter((s) => !s.completed && ((s.type as string) === "study" || !(s.type as string)));
+  const studyMinsThisWeek = pendingStudy.filter((s) => inThisWeek(s.scheduled_date)).reduce((sum, s) => sum + s.duration_minutes, 0);
+  const studyMinsNextWeek = pendingStudy.filter((s) => inNextWeek(s.scheduled_date)).reduce((sum, s) => sum + s.duration_minutes, 0);
+  const studyHoursThisWeek = Math.round(studyMinsThisWeek / 60 * 10) / 10;
+  const studyHoursNextWeek = Math.round(studyMinsNextWeek / 60 * 10) / 10;
+
+  const pendingExams = assignments.filter((a) => !a.completed && (a.type === "exam" || a.type === "quiz") && daysUntil(a.due_date) >= 0);
+  const examsThisWeek = pendingExams.filter((a) => inThisWeek(a.due_date)).length;
+  const examsNextWeek = pendingExams.filter((a) => inNextWeek(a.due_date)).length;
 
   // ── Table filter / sort / paginate ───────────────────────────────
   const filteredAssignments = assignments.filter((a) => {
@@ -538,10 +563,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Assignments to Complete
               </p>
-              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{assignmentsToComplete}</p>
-              <p className="text-[13px] text-white/50">
-                {assignmentsToComplete === 0 ? "All caught up!" : assignmentsToComplete === 1 ? "pending assignment" : "pending assignments"}
-              </p>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{assignmentsThisWeek}</h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
+              </div>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{assignmentsNextWeek}</h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              </div>
             </div>
 
             {/* Study Hours to Do */}
@@ -549,12 +578,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Study Hours to Do
               </p>
-              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">
-                {studyHoursToDo}<span className="text-[clamp(20px,1.75vw,28px)] font-medium text-white/60 ml-1">h</span>
-              </p>
-              <p className="text-[13px] text-white/50">
-                {studyMinsToDo === 0 ? "No sessions scheduled" : "in planned study sessions"}
-              </p>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{studyHoursThisWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
+              </div>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{studyHoursNextWeek}<span className="text-[19px] font-light text-[#BFBCBC] ml-1">h</span></h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              </div>
             </div>
 
             {/* Upcoming Exams */}
@@ -562,10 +593,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[19px] font-semibold text-white uppercase">
                 Upcoming Exams
               </p>
-              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{upcomingExams}</p>
-              <p className="text-[13px] text-white/50">
-                {upcomingExams === 0 ? "No exams coming up" : upcomingExams === 1 ? "exam or quiz ahead" : "exams & quizzes ahead"}
-              </p>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{examsThisWeek}</h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| this week</span>
+              </div>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-medium text-white leading-none">{examsNextWeek}</h2>
+                <span className="text-[19px] font-light text-[#BFBCBC]">| next week</span>
+              </div>
             </div>
 
           </div>
