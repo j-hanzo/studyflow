@@ -336,7 +336,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     const m = totalMins % 60;
     const period   = h < 12 ? "AM" : "PM";
     const displayH = h % 12 === 0 ? 12 : h % 12;
-    const label    = m === 0 ? `${displayH} ${period}` : `${displayH}:30 ${period}`;
+    const label    = m === 0 ? `${displayH} ${period}` : "";
     return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
   });
   function slotTop(startTime: string): number {
@@ -933,7 +933,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   className="absolute left-0 right-0 flex items-center hover:bg-white/5 cursor-pointer transition-colors"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className="text-[16px] text-[#9f9f9f] pl-[40px] pr-3 flex-shrink-0 select-none leading-none whitespace-nowrap">
+                  <span className="w-[120px] pl-[40px] text-[16px] text-[#9f9f9f] flex-shrink-0 select-none leading-none whitespace-nowrap">
                     {slot.label}
                   </span>
                   <div className="flex-1 border-t border-white/10 mr-[40px]" />
