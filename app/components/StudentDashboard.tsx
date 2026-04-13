@@ -130,6 +130,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Short-screen detection — auto-collapse month calendar to single week row
+  const [isShortScreen, setIsShortScreen] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-height: 768px)");
+    setIsShortScreen(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsShortScreen(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   // Table state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"due_date" | "status">("due_date");
@@ -151,14 +161,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   // Window-level drag handlers (set up once)
   useEffect(() => {
     const SLOT_PX = 48;
-    const T_START = 7;
+    const T_START_MINS = 30; // 0:30 AM
 
     const onMove = (e: MouseEvent) => {
       const d = dragRef.current;
       if (!d) return;
       const delta = e.pageY - d.startY;
       if (Math.abs(delta) > 4) d.moved = true;
-      const maxTop = 15 * 2 * SLOT_PX - SLOT_PX;
+      const totalSlots = (24 * 60 - T_START_MINS) / 30;
+      const maxTop = (totalSlots - 1) * SLOT_PX;
       d.currentTop = Math.max(0, Math.min(d.origTop + delta, maxTop));
       if (d.moved) setDragTop({ sessionId: d.sessionId, top: d.currentTop });
     };
@@ -169,7 +180,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       dragRef.current = null;
 
       if (d.moved) {
-        const totalMins = T_START * 60 + (d.currentTop / SLOT_PX) * 30;
+        const totalMins = T_START_MINS + (d.currentTop / SLOT_PX) * 30;
         const snapped   = Math.round(totalMins / 15) * 15;
         const h = Math.floor(snapped / 60);
         const m = snapped % 60;
@@ -244,7 +255,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const activeRowIdx = selectedDayNum
     ? calendarRows.findIndex((row) => row.includes(selectedDayNum))
     : 0;
-  const visibleRows = calendarExpanded ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
+  const showAllRows = calendarExpanded && !isShortScreen;
+  const visibleRows = showAllRows ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
 
   const assignmentTypesByDate = assignments.reduce<Record<string, Set<string>>>((acc, a) => {
     const d = a.due_date.slice(0, 10);
@@ -347,22 +359,26 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     setPopover((p) => ({ ...p, open: false }));
   }
 
-  // Timeline helpers
-  const TIMELINE_START = 7;
-  const TIMELINE_END   = 22;
-  const SLOT_H         = 48;
-  const timeSlots = Array.from({ length: (TIMELINE_END - TIMELINE_START) * 2 }, (_, i) => {
-    const totalMins = TIMELINE_START * 60 + i * 30;
-    const h = Math.floor(totalMins / 60);
-    const m = totalMins % 60;
-    const period   = h < 12 ? "AM" : "PM";
-    const displayH = h % 12 === 0 ? 12 : h % 12;
-    const label    = m === 0 ? `${displayH} ${period}` : "";
-    return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
-  });
+  // Timeline helpers — 12:30 AM through 12:00 AM (next day)
+  // First slot is 0:30 so time labels aren't clipped under the month view
+  const TIMELINE_START_MINS = 30;        // 0:30 AM
+  const TIMELINE_END_MINS   = 24 * 60;   // 24:00 (midnight next day)
+  const SLOT_H              = 48;
+  const timeSlots = Array.from(
+    { length: (TIMELINE_END_MINS - TIMELINE_START_MINS) / 30 },
+    (_, i) => {
+      const totalMins = TIMELINE_START_MINS + i * 30;
+      const h = Math.floor(totalMins / 60) % 24;
+      const m = totalMins % 60;
+      const period   = h < 12 ? "AM" : "PM";
+      const displayH = h % 12 === 0 ? 12 : h % 12;
+      const label    = m === 0 ? `${displayH} ${period}` : "";
+      return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
+    }
+  );
   function slotTop(startTime: string): number {
     const [h, m] = startTime.split(":").map(Number);
-    return ((h - TIMELINE_START) * 60 + (m || 0)) / 30 * SLOT_H;
+    return ((h * 60 + (m || 0)) - TIMELINE_START_MINS) / 30 * SLOT_H;
   }
   function slotHeight(mins: number): number {
     return Math.max(mins / 30 * SLOT_H, SLOT_H * 0.6);
@@ -860,7 +876,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {/* Day cells — collapsible */}
             <div
               className="transition-all duration-300 ease-in-out overflow-hidden"
-              style={{ maxHeight: calendarExpanded ? `${calendarRows.length * 46}px` : "46px" }}
+              style={{ maxHeight: showAllRows ? `${calendarRows.length * 46}px` : "46px" }}
             >
               {visibleRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="grid grid-cols-7">
