@@ -461,17 +461,17 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       <main className="flex-1 overflow-auto min-w-0">
 
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 px-14">
-          <div className="py-3 flex items-center gap-4 border-b border-white/10">
+        <header className="sticky top-0 z-10 px-[clamp(32px,3.5vw,56px)]">
+          <div className="py-3 flex items-center gap-[clamp(12px,1.5vw,16px)] border-b border-white/10">
 
-          {/* Title + upload button — fixed 40px gap between them */}
-          <div className="flex items-center gap-[40px] flex-shrink-0">
+          {/* Title + upload button */}
+          <div className="flex items-center gap-[clamp(20px,2.5vw,40px)] flex-shrink-0">
             <h1 className="text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
             <Link
               href="/capture"
-              className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[19px] font-medium px-4 py-2 rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
+              className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[clamp(15px,1.2vw,19px)] font-medium px-[clamp(12px,1vw,16px)] py-[clamp(6px,0.5vw,8px)] rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" />
+              <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" className="w-[clamp(18px,1.6vw,26px)] h-[clamp(18px,1.6vw,26px)]" />
               Upload Material
             </Link>
           </div>
@@ -484,7 +484,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <h3 className="text-white leading-none">{profile.full_name}</h3>
               <p className="text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
             </div>
-            <div className="w-[70px] h-[70px] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
+            <div className="w-[clamp(44px,4.3vw,70px)] h-[clamp(44px,4.3vw,70px)] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
               <Image src="/icons/icon-user.jpg" width={70} height={70} alt="avatar" className="w-full h-full object-cover" />
             </div>
           </div>
@@ -493,7 +493,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         </header>
 
         {/* ── Body ── */}
-        <div className="px-14 py-6 space-y-6">
+        <div className="px-[clamp(32px,3.5vw,56px)] py-6 space-y-6">
 
           {/* ── 3 Stat Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -503,7 +503,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Assignments to Complete
               </p>
-              <p className="text-[52px] font-bold text-white leading-none">{assignmentsToComplete}</p>
+              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{assignmentsToComplete}</p>
               <p className="text-[13px] text-white/50">
                 {assignmentsToComplete === 0 ? "All caught up!" : assignmentsToComplete === 1 ? "pending assignment" : "pending assignments"}
               </p>
@@ -514,8 +514,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Study Hours to Do
               </p>
-              <p className="text-[52px] font-bold text-white leading-none">
-                {studyHoursToDo}<span className="text-[28px] font-medium text-white/60 ml-1">h</span>
+              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">
+                {studyHoursToDo}<span className="text-[clamp(20px,1.75vw,28px)] font-medium text-white/60 ml-1">h</span>
               </p>
               <p className="text-[13px] text-white/50">
                 {studyMinsToDo === 0 ? "No sessions scheduled" : "in planned study sessions"}
@@ -527,7 +527,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Upcoming Exams
               </p>
-              <p className="text-[52px] font-bold text-white leading-none">{upcomingExams}</p>
+              <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{upcomingExams}</p>
               <p className="text-[13px] text-white/50">
                 {upcomingExams === 0 ? "No exams coming up" : upcomingExams === 1 ? "exam or quiz ahead" : "exams & quizzes ahead"}
               </p>
