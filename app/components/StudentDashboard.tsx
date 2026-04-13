@@ -109,6 +109,17 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarExpanded, setCalendarExpanded] = useState(true);
 
+  // Track calendar panel width for floating toggle positioning
+  const calendarPanelRef = useRef<HTMLDivElement>(null);
+  const [calendarW, setCalendarW] = useState(460);
+  useEffect(() => {
+    const el = calendarPanelRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setCalendarW(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Table state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"due_date" | "status">("due_date");
@@ -414,7 +425,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       {/* ── Floating calendar toggle — midpoint sits on panel left edge ── */}
       <button
         onClick={() => setCalendarOpen((o) => !o)}
-        style={{ right: calendarOpen ? "618px" : "0px" }}
+        style={{ right: calendarOpen ? `${calendarW - 22}px` : "0px" }}
         className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
         title={calendarOpen ? "Hide calendar" : "Show calendar"}
       >
@@ -800,9 +811,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
       {/* ── Right calendar panel ── */}
       <div
-        className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}
+        ref={calendarPanelRef}
+        className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[clamp(280px,35vw,460px)]" : "w-0"}`}
       >
-        <div className="w-[640px] h-full bg-[#0A2637]/75 border-l border-white/10 flex flex-col overflow-hidden">
+        <div className="w-full h-full bg-[#0A2637]/75 border-l border-white/10 flex flex-col overflow-hidden">
 
           {/* Month section */}
           <div className="px-[40px] pt-[20px] pb-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
