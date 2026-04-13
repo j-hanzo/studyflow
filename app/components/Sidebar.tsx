@@ -73,7 +73,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-[#0A2637]/75 border-r border-white/10 flex flex-col flex-shrink-0">
+    <aside className="w-64 min-h-screen bg-[#0A2637]/75 flex flex-col flex-shrink-0">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-white/10 flex items-center">
         <Image src="/icons/logo.svg" alt="Lumen" width={140} height={39} priority />

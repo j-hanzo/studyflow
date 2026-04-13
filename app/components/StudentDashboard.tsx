@@ -534,7 +534,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Assignments to Complete */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Assignments to Complete
               </p>
@@ -545,7 +545,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Study Hours to Do */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Study Hours to Do
               </p>
@@ -558,7 +558,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Upcoming Exams */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Upcoming Exams
               </p>
@@ -587,7 +587,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                                  "/icons/icon-unsatisfied.svg";
 
                 return (
-                  <div key={cls.id} className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-5 flex flex-col items-center gap-3">
+                  <div key={cls.id} className="card-gradient backdrop-blur-sm rounded-[6px] p-5 flex flex-col items-center gap-3">
                     <p className="text-[13px] font-semibold text-white text-center w-full truncate">{cls.name}</p>
 
                     {/* Circular gauge */}
@@ -649,7 +649,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           )}
 
           {/* ── Assignments / Materials Table ── */}
-          <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 overflow-hidden">
+          <div className="card-gradient backdrop-blur-sm rounded-[6px] overflow-hidden">
 
             {/* Table toolbar */}
             <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-white/10">
@@ -849,7 +849,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         ref={calendarPanelRef}
         className={`fixed top-0 right-0 h-screen z-40 transition-transform duration-300 ease-in-out w-[clamp(280px,35vw,460px)] ${calendarOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="w-full h-full bg-[#0A2637]/40 backdrop-blur-xl border-l border-white/10 flex flex-col overflow-hidden">
+        <div className="w-full h-full bg-[#0A2637]/40 backdrop-blur-xl flex flex-col overflow-hidden">
 
           {/* Month section */}
           <div className="px-[40px] pt-[20px] pb-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
