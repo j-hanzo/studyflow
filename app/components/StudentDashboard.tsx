@@ -441,7 +441,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-3 flex items-center gap-4">
 
           {/* Title + upload button */}
-          <h1 className="text-[18px] font-bold text-white whitespace-nowrap">{firstName}&apos;s Dashboard</h1>
+          <h1 className="text-[36px] font-medium text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
           <Link
             href="/capture"
             className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
