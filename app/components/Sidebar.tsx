@@ -76,9 +76,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
     <aside className="w-64 min-h-screen bg-[#0A2637]/75 border-r border-white/10 flex flex-col flex-shrink-0">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-white/10 flex items-center">
-        <span className="text-[26px] font-bold tracking-widest text-white select-none">
-          LU<span className="text-[#E6FF5B]">MEN</span>
-        </span>
+        <Image src="/icons/logo.svg" alt="Lumen" width={140} height={39} priority />
       </div>
 
       {/* Mode switcher */}
