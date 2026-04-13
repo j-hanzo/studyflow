@@ -109,6 +109,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarExpanded, setCalendarExpanded] = useState(true);
 
+  // Auto-scroll timeline to 8:30 AM on mount
+  const timelineRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (timelineRef.current) {
+      // 8:30 AM = (8*60+30 - 30) / 30 * 48 = 16 * 48 = 768px
+      const scrollTo = ((8 * 60 + 30) - 30) / 30 * 48;
+      timelineRef.current.scrollTop = scrollTo;
+    }
+  }, []);
+
   // Track calendar panel width for floating toggle positioning
   const calendarPanelRef = useRef<HTMLDivElement>(null);
   const [calendarW, setCalendarW] = useState(460);
@@ -130,14 +140,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Short-screen detection — auto-collapse month calendar to single week row
-  const [isShortScreen, setIsShortScreen] = useState(false);
+  // Short-screen detection — default-collapse month calendar on short viewports
   useEffect(() => {
-    const mq = window.matchMedia("(max-height: 768px)");
-    setIsShortScreen(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsShortScreen(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    if (window.matchMedia("(max-height: 768px)").matches) {
+      setCalendarExpanded(false);
+    }
   }, []);
 
   // Table state
@@ -255,8 +262,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const activeRowIdx = selectedDayNum
     ? calendarRows.findIndex((row) => row.includes(selectedDayNum))
     : 0;
-  const showAllRows = calendarExpanded && !isShortScreen;
-  const visibleRows = showAllRows ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
+  const visibleRows = calendarExpanded ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
 
   const assignmentTypesByDate = assignments.reduce<Record<string, Set<string>>>((acc, a) => {
     const d = a.due_date.slice(0, 10);
@@ -876,7 +882,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {/* Day cells — collapsible */}
             <div
               className="transition-all duration-300 ease-in-out overflow-hidden"
-              style={{ maxHeight: showAllRows ? `${calendarRows.length * 46}px` : "46px" }}
+              style={{ maxHeight: calendarExpanded ? `${calendarRows.length * 46}px` : "46px" }}
             >
               {visibleRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="grid grid-cols-7">
@@ -933,7 +939,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           </div>
 
           {/* Daily timeline */}
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div ref={timelineRef} className="flex-1 overflow-y-auto min-h-0">
 
             {/* Assignments due banner */}
             {selectedDateAssignments.length > 0 && (
