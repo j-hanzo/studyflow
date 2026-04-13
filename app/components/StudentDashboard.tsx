@@ -535,7 +535,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Assignments to Complete */}
             <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
-              <p className="text-[19px] font-semibold text-white">
+              <p className="text-[19px] font-semibold text-white uppercase">
                 Assignments to Complete
               </p>
               <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{assignmentsToComplete}</p>
@@ -546,7 +546,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Study Hours to Do */}
             <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
-              <p className="text-[19px] font-semibold text-white">
+              <p className="text-[19px] font-semibold text-white uppercase">
                 Study Hours to Do
               </p>
               <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">
@@ -559,7 +559,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Upcoming Exams */}
             <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
-              <p className="text-[19px] font-semibold text-white">
+              <p className="text-[19px] font-semibold text-white uppercase">
                 Upcoming Exams
               </p>
               <p className="text-[clamp(36px,3.2vw,52px)] font-bold text-white leading-none">{upcomingExams}</p>
