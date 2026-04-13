@@ -466,7 +466,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
           {/* Title + upload button — fixed 40px gap between them */}
           <div className="flex items-center gap-[40px] flex-shrink-0">
-            <h1 className="text-[36px] font-medium text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
+            <h1 className="text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
             <Link
               href="/capture"
               className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[19px] font-medium px-4 py-2 rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
@@ -481,8 +481,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           {/* User info */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="text-right hidden md:block">
-              <h3 className="text-[29px] font-medium text-white leading-none">{profile.full_name}</h3>
-              <p className="text-[16px] text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
+              <h3 className="text-white leading-none">{profile.full_name}</h3>
+              <p className="text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
             </div>
             <div className="w-[70px] h-[70px] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
               <Image src="/icons/icon-user.jpg" width={70} height={70} alt="avatar" className="w-full h-full object-cover" />
@@ -821,7 +821,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Date header + month nav */}
             <div className="flex items-center justify-between">
-              <h3 className="text-[29px] font-light text-white leading-none whitespace-nowrap min-w-0">
+              <h3 className="font-light text-white leading-none whitespace-nowrap min-w-0">
                 {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}{" "}
                 <span className="text-[#9f9f9f]">
                   {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
