@@ -438,7 +438,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       <main className="flex-1 overflow-auto min-w-0">
 
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-14 py-3 flex items-center gap-4">
+        <header className="sticky top-0 z-10 border-b border-white/10 px-14 py-3 flex items-center gap-4">
 
           {/* Title + upload button — fixed 40px gap between them */}
           <div className="flex items-center gap-[40px] flex-shrink-0">
