@@ -809,7 +809,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             <div className="flex items-center justify-between">
               <h3 className="text-[29px] font-light text-white leading-none whitespace-nowrap min-w-0">
                 {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}{" "}
-                <span className="text-white/70">
+                <span className="text-[#9f9f9f]">
                   {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
               </h3>
