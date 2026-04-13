@@ -807,14 +807,12 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
             {/* Date header + month nav */}
             <div className="flex items-center justify-between">
-              <div className="flex items-baseline gap-2 min-w-0">
-                <span className="text-[28px] font-bold text-white leading-none whitespace-nowrap">
-                  {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}
-                </span>
-                <span className="text-[28px] font-normal text-white/70 leading-none whitespace-nowrap">
+              <h3 className="text-[29px] font-light text-white leading-none whitespace-nowrap min-w-0">
+                {MONTH_NAMES[viewMonth].slice(0, 3)}, {new Date(selectedDate + "T00:00:00").getDate()}{" "}
+                <span className="text-white/70">
                   {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
-              </div>
+              </h3>
               <div className="flex items-center gap-0 flex-shrink-0 ml-2">
                 <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
                   <ChevronLeft className="w-7 h-7 text-white" />
