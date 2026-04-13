@@ -402,7 +402,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       {/* ── Floating sidebar toggle — midpoint sits on panel right edge ── */}
       <button
         onClick={() => setSidebarOpen((o) => !o)}
-        style={{ left: sidebarOpen ? "234px" : "-22px" }}
+        style={{ left: sidebarOpen ? "234px" : "0px" }}
         className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
