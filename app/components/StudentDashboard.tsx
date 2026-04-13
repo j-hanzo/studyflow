@@ -438,17 +438,19 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       <main className="flex-1 overflow-auto min-w-0">
 
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-3 flex items-center gap-4">
+        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-14 py-3 flex items-center gap-4">
 
-          {/* Title + upload button */}
-          <h1 className="text-[36px] font-medium text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
-          <Link
-            href="/capture"
-            className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[19px] font-medium px-4 py-2 rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
-          >
-            <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" />
-            Upload Material
-          </Link>
+          {/* Title + upload button — fixed 40px gap between them */}
+          <div className="flex items-center gap-[40px] flex-shrink-0">
+            <h1 className="text-[36px] font-medium text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
+            <Link
+              href="/capture"
+              className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[19px] font-medium px-4 py-2 rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" />
+              Upload Material
+            </Link>
+          </div>
 
           <div className="flex-1" />
 
@@ -486,7 +488,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         </header>
 
         {/* ── Body ── */}
-        <div className="px-8 py-6 space-y-6">
+        <div className="px-14 py-6 space-y-6">
 
           {/* ── 3 Stat Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
