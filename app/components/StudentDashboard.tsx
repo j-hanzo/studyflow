@@ -432,12 +432,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <Image src="/icons/icon-show-hide-calendar-panel.svg" alt="" width={44} height={44} />
       </button>
 
-      {/* ── Backdrop blur when calendar is open ── */}
-      <div
-        className={`fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300 ${calendarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={() => setCalendarOpen(false)}
-      />
-
       {/* ── Modals ── */}
       {showAddClass && (
         <AddClassModal
@@ -820,7 +814,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         ref={calendarPanelRef}
         className={`fixed top-0 right-0 h-screen z-40 transition-transform duration-300 ease-in-out w-[clamp(280px,35vw,460px)] ${calendarOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="w-full h-full bg-[#0A2637]/95 backdrop-blur-md border-l border-white/10 flex flex-col overflow-hidden">
+        <div className="w-full h-full bg-[#0A2637]/40 backdrop-blur-xl border-l border-white/10 flex flex-col overflow-hidden">
 
           {/* Month section */}
           <div className="px-[40px] pt-[20px] pb-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
