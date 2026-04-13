@@ -534,7 +534,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Assignments to Complete */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
+            <div className="bg-[#0A2637]/70 backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[19px] font-semibold text-white uppercase">
                 Assignments to Complete
               </p>
@@ -545,7 +545,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Study Hours to Do */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
+            <div className="bg-[#0A2637]/70 backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[19px] font-semibold text-white uppercase">
                 Study Hours to Do
               </p>
@@ -558,7 +558,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Upcoming Exams */}
-            <div className="card-gradient backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
+            <div className="bg-[#0A2637]/70 backdrop-blur-sm rounded-[6px] p-6 flex flex-col gap-4">
               <p className="text-[19px] font-semibold text-white uppercase">
                 Upcoming Exams
               </p>
@@ -587,7 +587,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                                  "/icons/icon-unsatisfied.svg";
 
                 return (
-                  <div key={cls.id} className="card-gradient backdrop-blur-sm rounded-[6px] p-5 flex flex-col items-center gap-3">
+                  <div key={cls.id} className="bg-[#0A2637]/70 backdrop-blur-sm rounded-[6px] p-5 flex flex-col items-center gap-3">
                     <p className="text-[13px] font-semibold text-white text-center w-full truncate">{cls.name}</p>
 
                     {/* Circular gauge */}
@@ -649,7 +649,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           )}
 
           {/* ── Assignments / Materials Table ── */}
-          <div className="card-gradient backdrop-blur-sm rounded-[6px] overflow-hidden">
+          <div className="bg-[#0A2637]/70 backdrop-blur-sm rounded-[6px] overflow-hidden">
 
             {/* Table toolbar */}
             <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-white/10">
