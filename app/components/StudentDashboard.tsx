@@ -826,7 +826,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7">
               {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
-                <div key={i} className="text-center text-[16px] text-white/50">{d}</div>
+                <div key={i} className="text-center text-[16px] text-[#9f9f9f]">{d}</div>
               ))}
             </div>
 
@@ -842,6 +842,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                     const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                     const isToday    = dateStr === todayStr;
                     const isSelected = dateStr === selectedDate && !isToday;
+                    const isPast     = dateStr < todayStr;
                     const aTypes = assignmentTypesByDate[dateStr];
                     const sTypes = sessionTypesByDate[dateStr];
                     const hasDots = (aTypes && aTypes.size > 0) || (sTypes && sTypes.size > 0);
@@ -854,7 +855,8 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                         <span className={`w-[30px] h-[30px] flex items-center justify-center rounded-full text-[16px] leading-none
                           ${isToday    ? "bg-black text-white font-bold" : ""}
                           ${isSelected ? "ring-2 ring-white/40 font-bold text-white" : ""}
-                          ${!isToday && !isSelected ? "font-normal text-white" : ""}
+                          ${!isToday && !isSelected && isPast  ? "font-normal text-[#9f9f9f]" : ""}
+                          ${!isToday && !isSelected && !isPast ? "font-normal text-white" : ""}
                         `}>
                           {day}
                         </span>
@@ -929,7 +931,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   className="absolute left-0 right-0 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors flex items-start"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className={`text-[16px] text-white/40 pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
+                  <span className={`text-[16px] text-[#9f9f9f] pl-[40px] pt-1 flex-shrink-0 select-none leading-none ${slot.label ? "" : "opacity-0"}`}>
                     {slot.label || "·"}
                   </span>
                   {slot.label && (
