@@ -814,11 +814,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 </span>
               </h3>
               <div className="flex items-center gap-0 flex-shrink-0 ml-2">
-                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
-                  <ChevronLeft className="w-7 h-7 text-white" />
+                <button onClick={prevMonth} className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
+                  <ChevronLeft className="w-6 h-6 text-[#E6FF5B]" />
                 </button>
-                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
-                  <ChevronRight className="w-7 h-7 text-white" />
+                <button onClick={nextMonth} className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
+                  <ChevronRight className="w-6 h-6 text-[#E6FF5B]" />
                 </button>
               </div>
             </div>
