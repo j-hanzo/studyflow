@@ -444,9 +444,9 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <h1 className="text-[36px] font-medium text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
           <Link
             href="/capture"
-            className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[19px] font-medium px-4 py-2 rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
           >
-            <Image src="/icons/icon-upload.svg" width={15} height={15} alt="" />
+            <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" />
             Upload Material
           </Link>
 
@@ -616,14 +616,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               {/* Add assignment */}
               <button
                 onClick={() => setShowAddAssignment(true)}
-                className="flex items-center gap-1.5 text-[12px] font-semibold text-white/70 hover:text-white bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-white/70 hover:text-white bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-[6px] transition-colors flex-shrink-0"
               >
                 <Image src="/icons/icon-add.svg" width={14} height={14} alt="" />
                 Add
               </button>
 
               {/* Search */}
-              <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-white/10 rounded-[6px] px-3 py-1.5 flex-shrink-0">
                 <Image src="/icons/icon-filter.svg" width={14} height={14} alt="" className="opacity-60" />
                 <input
                   value={searchQuery}
@@ -645,7 +645,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   else { setSortField("due_date"); setSortDir("asc"); }
                   setCurrentPage(1);
                 }}
-                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-[6px] transition-colors flex-shrink-0 ${
                   sortField === "due_date" ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
@@ -663,7 +663,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   else { setSortField("status"); setSortDir("asc"); }
                   setCurrentPage(1);
                 }}
-                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-[6px] transition-colors flex-shrink-0 ${
                   sortField === "status" ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
@@ -724,7 +724,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       className="flex items-center gap-4 px-6 py-3.5 hover:bg-white/[0.03] transition-colors"
                     >
                       {/* Type icon */}
-                      <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-[6px] bg-white/10 flex items-center justify-center flex-shrink-0">
                         {typeIcon}
                       </div>
 
@@ -822,10 +822,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 </span>
               </div>
               <div className="flex items-center gap-0 flex-shrink-0 ml-2">
-                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors">
+                <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
                   <ChevronLeft className="w-7 h-7 text-white" />
                 </button>
-                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors">
+                <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-[6px] transition-colors">
                   <ChevronRight className="w-7 h-7 text-white" />
                 </button>
               </div>
@@ -857,7 +857,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       <button
                         key={colIdx}
                         onClick={() => setSelectedDate(dateStr)}
-                        className="flex flex-col items-center justify-start pt-[6px] h-[46px] hover:bg-white/10 rounded-lg transition-colors"
+                        className="flex flex-col items-center justify-start pt-[6px] h-[46px] hover:bg-white/10 rounded-[6px] transition-colors"
                       >
                         <span className={`w-[30px] h-[30px] flex items-center justify-center rounded-full text-[16px] leading-none
                           ${isToday    ? "bg-black text-white font-bold" : ""}
@@ -998,14 +998,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
             onClick={() => setPopover((p) => ({ ...p, open: false }))}
           />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="relative bg-white rounded-[6px] shadow-2xl w-full max-w-sm p-5 animate-in fade-in slide-in-from-bottom-4 duration-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {popover.sessionId ? "Edit session" : "New session"}
               </h3>
               <button
                 onClick={() => setPopover((p) => ({ ...p, open: false }))}
-                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                className="w-7 h-7 rounded-[6px] hover:bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -1023,7 +1023,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                         key={t.value}
                         type="button"
                         onClick={() => setPopover((p) => ({ ...p, type: t.value }))}
-                        className={`flex flex-col items-center gap-1 py-2 rounded-xl border text-[11px] font-semibold transition-all
+                        className={`flex flex-col items-center gap-1 py-2 rounded-[6px] border text-[11px] font-semibold transition-all
                           ${active ? "border-slate-300 bg-slate-900 text-white shadow-sm" : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
                       >
                         <span className={`w-2.5 h-2.5 rounded-full ${t.dot}`} />
@@ -1044,7 +1044,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   onKeyDown={(e) => e.key === "Enter" && saveSession()}
                   placeholder="e.g. Study for Physics exam"
                   autoFocus
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full text-sm border border-slate-200 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
@@ -1055,7 +1055,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   type="date"
                   value={popover.date}
                   onChange={(e) => setPopover((p) => ({ ...p, date: e.target.value }))}
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full text-sm border border-slate-200 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
@@ -1067,7 +1067,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                     type="time"
                     value={popover.startTime}
                     onChange={(e) => setPopover((p) => ({ ...p, startTime: e.target.value }))}
-                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full text-sm border border-slate-200 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -1075,7 +1075,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                   <select
                     value={popover.durationMinutes}
                     onChange={(e) => setPopover((p) => ({ ...p, durationMinutes: Number(e.target.value) }))}
-                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                    className="w-full text-sm border border-slate-200 rounded-[6px] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                   >
                     {[30, 45, 60, 90, 120].map((m) => (
                       <option key={m} value={m}>
@@ -1091,7 +1091,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             {popover.sessionId && (
               <button
                 onClick={() => setPopover((p) => ({ ...p, completed: !p.completed }))}
-                className={`w-full mt-4 flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                className={`w-full mt-4 flex items-center gap-2.5 px-3 py-2.5 rounded-[6px] border text-sm font-medium transition-all ${
                   popover.completed
                     ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                     : "bg-slate-50 border-slate-200 text-slate-500 hover:border-emerald-200 hover:text-emerald-600"
@@ -1111,14 +1111,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               <button
                 onClick={saveSession}
                 disabled={!popover.title.trim()}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm font-semibold py-2.5 rounded-[6px] transition-colors"
               >
                 {popover.sessionId ? "Save changes" : "Add session"}
               </button>
               {popover.sessionId && (
                 <button
                   onClick={deleteSession}
-                  className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-[6px] border border-slate-200 hover:bg-rose-50 hover:border-rose-200 flex items-center justify-center transition-colors"
                 >
                   <Trash2 className="w-4 h-4 text-rose-400" />
                 </button>
