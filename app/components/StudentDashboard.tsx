@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  CheckCircle2, Calendar,
+  CheckCircle2,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
   X, Trash2,
 } from "lucide-react";
@@ -409,6 +409,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={44} height={44} />
       </button>
 
+      {/* ── Floating calendar toggle — midpoint sits on panel left edge ── */}
+      <button
+        onClick={() => setCalendarOpen((o) => !o)}
+        style={{ right: calendarOpen ? "618px" : "0px" }}
+        className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
+        title={calendarOpen ? "Hide calendar" : "Show calendar"}
+      >
+        <Image src="/icons/icon-show-hide-calendar-panel.svg" alt="" width={44} height={44} />
+      </button>
+
       {/* ── Modals ── */}
       {showAddClass && (
         <AddClassModal
@@ -466,26 +476,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="h-8 w-px bg-white/20 flex-shrink-0" />
-
-          {/* Calendar toggle + date + prev/next */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setCalendarOpen((o) => !o)}
-              className="text-white/60 hover:text-white transition-colors"
-              title={calendarOpen ? "Hide calendar" : "Show calendar"}
-            >
-              <Calendar className="w-[18px] h-[18px]" />
-            </button>
-            <span className="text-[13px] font-medium text-white whitespace-nowrap">{dateLabel}</span>
-            <button onClick={prevDay} className="text-white/60 hover:text-white transition-colors" title="Previous day">
-              <Image src="/icons/icon-previous.svg" width={22} height={22} alt="Prev" />
-            </button>
-            <button onClick={nextDay} className="text-white/60 hover:text-white transition-colors" title="Next day">
-              <Image src="/icons/icon-next.svg" width={22} height={22} alt="Next" />
-            </button>
-          </div>
           </div>
         </header>
 
