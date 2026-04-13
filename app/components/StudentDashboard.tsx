@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Camera, CheckCircle2,
+  CheckCircle2, Calendar,
   ChevronRight, ChevronLeft, Plus, StickyNote, FileText, ClipboardList,
   X, Trash2,
 } from "lucide-react";
@@ -31,6 +31,16 @@ const colorMap: Record<string, string> = {
   "bg-rose-500": "bg-rose-500",
   "bg-violet-500": "bg-violet-500",
   "bg-blue-500": "bg-blue-500",
+};
+
+// Hex colors for SVG gauge strokes
+const gaugeColorMap: Record<string, string> = {
+  "bg-emerald-500": "#10b981",
+  "bg-indigo-500": "#6366f1",
+  "bg-amber-500": "#f59e0b",
+  "bg-rose-500": "#f43f5e",
+  "bg-violet-500": "#8b5cf6",
+  "bg-blue-500": "#3b82f6",
 };
 
 const SESSION_TYPES = [
@@ -81,13 +91,29 @@ function formatDate(dateStr: string) {
   });
 }
 
-export default function StudentDashboard({ profile, classes, assignments, studySessions, messages, recentMaterials }: Props) {
+function daysFromToday(dateStr: string) {
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+const PAGE_SIZE = 8;
+
+export default function StudentDashboard({ profile, classes, assignments, studySessions, messages: _messages, recentMaterials: _recentMaterials }: Props) {
   const [sessions, setSessions] = useState(studySessions);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarExpanded, setCalendarExpanded] = useState(true);
+
+  // Table state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<"due_date" | "status">("due_date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // On mobile, default both panels to hidden
   useEffect(() => {
@@ -103,15 +129,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
   // Window-level drag handlers (set up once)
   useEffect(() => {
-    const SLOT_PX = 48; // px per 30-min slot — mirrors SLOT_H
-    const T_START = 7;  // timeline start hour
+    const SLOT_PX = 48;
+    const T_START = 7;
 
     const onMove = (e: MouseEvent) => {
       const d = dragRef.current;
       if (!d) return;
       const delta = e.pageY - d.startY;
       if (Math.abs(delta) > 4) d.moved = true;
-      const maxTop = 15 * 2 * SLOT_PX - SLOT_PX; // (22-7)*2 slots - 1
+      const maxTop = 15 * 2 * SLOT_PX - SLOT_PX;
       d.currentTop = Math.max(0, Math.min(d.origTop + delta, maxTop));
       if (d.moved) setDragTop({ sessionId: d.sessionId, top: d.currentTop });
     };
@@ -122,7 +148,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       dragRef.current = null;
 
       if (d.moved) {
-        // Snap to nearest 15-min mark
         const totalMins = T_START * 60 + (d.currentTop / SLOT_PX) * 30;
         const snapped   = Math.round(totalMins / 15) * 15;
         const h = Math.floor(snapped / 60);
@@ -136,7 +161,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         setDragTop(null);
       } else {
         setDragTop(null);
-        // Treat as a click — open edit modal
         const session = sessionsRef.current.find((s) => s.id === d.sessionId);
         if (session) {
           setPopover({
@@ -171,7 +195,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   const router = useRouter();
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
 
-  // ── Drag-to-reschedule ───────────────────────────────────────────
+  // Drag-to-reschedule
   const dragRef = useRef<{
     sessionId: string; startY: number; origTop: number;
     currentTop: number; moved: boolean;
@@ -187,14 +211,12 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     ...Array(firstDayOfMonth).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  // Pad to complete last row
   const calendarRows: (number | null)[][] = [];
   for (let i = 0; i < calendarCells.length; i += 7) {
     const row = calendarCells.slice(i, i + 7);
     while (row.length < 7) row.push(null);
     calendarRows.push(row);
   }
-  // Find the row containing the selected date for week-strip view
   const selectedDay = new Date(selectedDate + "T00:00:00");
   const isCurrentMonth = selectedDay.getFullYear() === viewYear && selectedDay.getMonth() === viewMonth;
   const selectedDayNum = isCurrentMonth ? selectedDay.getDate() : null;
@@ -202,7 +224,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     ? calendarRows.findIndex((row) => row.includes(selectedDayNum))
     : 0;
   const visibleRows = calendarExpanded ? calendarRows : [calendarRows[Math.max(activeRowIdx, 0)]];
-  // Per-date maps for calendar dot indicators
+
   const assignmentTypesByDate = assignments.reduce<Record<string, Set<string>>>((acc, a) => {
     const d = a.due_date.slice(0, 10);
     if (!acc[d]) acc[d] = new Set();
@@ -227,7 +249,24 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     else setViewMonth((m) => m + 1);
   }
 
-  // ── Session popover ──────────────────────────────────────────────
+  function prevDay() {
+    const d = new Date(selectedDate + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    const newDate = d.toISOString().slice(0, 10);
+    setSelectedDate(newDate);
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+  }
+  function nextDay() {
+    const d = new Date(selectedDate + "T00:00:00");
+    d.setDate(d.getDate() + 1);
+    const newDate = d.toISOString().slice(0, 10);
+    setSelectedDate(newDate);
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+  }
+
+  // Session popover
   interface SessionPopover {
     open: boolean;
     sessionId: string | null;
@@ -245,18 +284,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   function openPopoverNew(slotTime: string) {
     setPopover({ open: true, sessionId: null, title: "", type: "study", date: selectedDate, startTime: slotTime, durationMinutes: 60, completed: false });
   }
-  function openPopoverEdit(session: typeof sessions[number]) {
-    setPopover({
-      open: true,
-      sessionId: session.id,
-      title: session.title,
-      type: (session.type as SessionType) ?? "study",
-      date: session.scheduled_date,
-      startTime: session.start_time?.slice(0, 5) ?? "09:00",
-      durationMinutes: session.duration_minutes,
-      completed: session.completed,
-    });
-  }
+
   async function saveSession() {
     if (!popover.title.trim()) return;
     if (popover.sessionId) {
@@ -289,6 +317,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     }
     setPopover((p) => ({ ...p, open: false }));
   }
+
   async function deleteSession() {
     if (!popover.sessionId) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -297,17 +326,15 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     setPopover((p) => ({ ...p, open: false }));
   }
 
-  // ── Timeline helpers ─────────────────────────────────────────────
-  const TIMELINE_START = 7;  // 7 AM
-  const TIMELINE_END   = 22; // 10 PM
-  const SLOT_H         = 48; // px per 30-min slot
+  // Timeline helpers
+  const TIMELINE_START = 7;
+  const TIMELINE_END   = 22;
+  const SLOT_H         = 48;
   const timeSlots = Array.from({ length: (TIMELINE_END - TIMELINE_START) * 2 }, (_, i) => {
     const totalMins = TIMELINE_START * 60 + i * 30;
     const h = Math.floor(totalMins / 60);
     const m = totalMins % 60;
-    const label = m === 0
-      ? `${String(h).padStart(2, "0")}:00`
-      : "";
+    const label = m === 0 ? `${String(h).padStart(2, "0")}:00` : "";
     return { h, m, label, timeStr: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` };
   });
   function slotTop(startTime: string): number {
@@ -318,74 +345,56 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
     return Math.max(mins / 30 * SLOT_H, SLOT_H * 0.6);
   }
 
-  const [inbox, setInbox] = useState(recentMaterials);
+  // ── New stat computations ────────────────────────────────────────
+  const assignmentsToComplete = assignments.filter((a) => !a.completed).length;
+  const studyMinsToDo = sessions
+    .filter((s) => !s.completed && ((s.type as string) === "study" || !(s.type as string)))
+    .reduce((sum, s) => sum + s.duration_minutes, 0);
+  const studyHoursToDo = Math.round(studyMinsToDo / 60 * 10) / 10;
+  const upcomingExams = assignments.filter(
+    (a) => !a.completed && (a.type === "exam" || a.type === "quiz") && daysUntil(a.due_date) >= 0
+  ).length;
 
-  // Stat bar calculations
-  const materialsToFile = inbox.length;
-
-  function daysFromToday(dateStr: string) {
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    const d = new Date(dateStr);
-    d.setHours(0, 0, 0, 0);
-    return Math.round((d.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-  // Tasks = study/assignment sessions only (exam & quiz sessions go to Exams & Quizzes)
-  const tasksThisWeek = sessions.filter((s) => {
-    const d = daysFromToday(s.scheduled_date);
-    const t = (s.type as string) ?? "study";
-    return !s.completed && d >= 0 && d <= 6 && t !== "exam" && t !== "quiz";
-  }).length;
-  const tasksNextWeek = sessions.filter((s) => {
-    const d = daysFromToday(s.scheduled_date);
-    const t = (s.type as string) ?? "study";
-    return !s.completed && d >= 7 && d <= 13 && t !== "exam" && t !== "quiz";
-  }).length;
-
-  const thisWeekAssignments = assignments.filter((a) => {
-    const d = daysUntil(a.due_date);
-    return !a.completed && d >= 0 && d <= 6;
-  });
-  const nextWeekAssignments = assignments.filter((a) => {
-    const d = daysUntil(a.due_date);
-    return !a.completed && d >= 7 && d <= 13;
-  });
-  const overdueAssignments = assignments.filter((a) => {
-    return !a.completed && daysUntil(a.due_date) < 0;
+  // ── Table filter / sort / paginate ───────────────────────────────
+  const filteredAssignments = assignments.filter((a) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      a.title.toLowerCase().includes(q) ||
+      (a.classes?.name ?? "").toLowerCase().includes(q) ||
+      a.type.toLowerCase().includes(q)
+    );
   });
 
-  const assignmentsThisWeek = thisWeekAssignments.length;
-  const assignmentsNextWeek = nextWeekAssignments.length;
+  const sortedAssignments = [...filteredAssignments].sort((a, b) => {
+    if (sortField === "due_date") {
+      const diff = new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      return sortDir === "asc" ? diff : -diff;
+    } else {
+      const statusOrder = (x: typeof a): number => {
+        if (x.completed) return 2;
+        if (daysUntil(x.due_date) < 0) return 0;
+        return 1;
+      };
+      const diff = statusOrder(a) - statusOrder(b);
+      return sortDir === "asc" ? diff : -diff;
+    }
+  });
 
-  // Exams & Quizzes = assignment rows of those types + sessions tagged exam/quiz
-  const examSessionsThisWeek = sessions.filter((s) => {
-    const d = daysFromToday(s.scheduled_date);
-    const t = (s.type as string) ?? "study";
-    return !s.completed && d >= 0 && d <= 6 && (t === "exam" || t === "quiz");
-  }).length;
-  const examSessionsNextWeek = sessions.filter((s) => {
-    const d = daysFromToday(s.scheduled_date);
-    const t = (s.type as string) ?? "study";
-    return !s.completed && d >= 7 && d <= 13 && (t === "exam" || t === "quiz");
-  }).length;
-  const examsThisWeek = thisWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length + examSessionsThisWeek;
-  const examsNextWeek = nextWeekAssignments.filter((a) => a.type === "exam" || a.type === "quiz").length + examSessionsNextWeek;
+  const totalPages = Math.max(1, Math.ceil(sortedAssignments.length / PAGE_SIZE));
+  const paginatedAssignments = sortedAssignments.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
-  async function moveToClass(materialId: string, classId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("materials").update({ class_id: classId }).eq("id", materialId);
-    setInbox((prev) => prev.filter((m) => m.id !== materialId));
-  }
+  // Header date label: "Apr, 2 Thursday"
+  const selDateObj = new Date(selectedDate + "T00:00:00");
+  const dateLabel = `${selDateObj.toLocaleDateString("en-US", { month: "short" })}, ${selDateObj.getDate()} ${selDateObj.toLocaleDateString("en-US", { weekday: "long" })}`;
 
-  async function toggleSession(id: string, completed: boolean) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from("study_sessions") as any).update({ completed: !completed }).eq("id", id);
-    setSessions((prev) => prev.map((s) => s.id === id ? { ...s, completed: !completed } : s));
-  }
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  // Gauge SVG constants
+  const GAUGE_R = 38;
+  const GAUGE_CIRC = 2 * Math.PI * GAUGE_R;
+  const GAUGE_ARC  = GAUGE_CIRC * 0.75; // 270°
 
   return (
     <div className="flex min-h-screen blob-gradient-bg">
@@ -397,18 +406,10 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <Image src="/icons/left-panel-show-hide.svg" alt="" width={48} height={48} />
+        <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={48} height={48} />
       </button>
 
-      {/* ── Floating calendar toggle (sits at left edge of panel, like sidebar toggle) ── */}
-      <button
-        onClick={() => setCalendarOpen((o) => !o)}
-        style={{ right: calendarOpen ? "628px" : "12px" }}
-        className="fixed top-5 z-50 transition-[right] duration-300 ease-in-out"
-        title={calendarOpen ? "Hide calendar" : "Show calendar"}
-      >
-        <Image src="/icons/calendar-show-hide.svg" alt="" width={48} height={48} />
-      </button>
+      {/* ── Modals ── */}
       {showAddClass && (
         <AddClassModal
           studentId={profile.id}
@@ -425,283 +426,389 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
         />
       )}
 
-      {/* ── Left sidebar with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${sidebarOpen ? "w-64" : "w-0"}`} style={{ transitionProperty: "width" }}>
+      {/* ── Left sidebar ── */}
+      <div
+        className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${sidebarOpen ? "w-64" : "w-0"}`}
+        style={{ transitionProperty: "width" }}
+      >
         <Sidebar mode="student" classes={classes} profile={profile} onAddClass={() => setShowAddClass(true)} />
       </div>
 
+      {/* ── Main area ── */}
       <main className="flex-1 overflow-auto min-w-0">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white">{greeting}, {firstName} 👋</h1>
-            <p className="text-sm text-white/50">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-              {profile.grade ? ` · ${profile.grade}` : ""}
-            </p>
+
+        {/* ── Header ── */}
+        <header className="sticky top-0 z-10 bg-[#0A2637]/75 backdrop-blur-sm border-b border-white/10 px-8 py-3 flex items-center gap-4">
+
+          {/* Title + upload button */}
+          <h1 className="text-[18px] font-bold text-white whitespace-nowrap">{firstName}&apos;s Dashboard</h1>
+          <Link
+            href="/capture"
+            className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+          >
+            <Image src="/icons/icon-upload.svg" width={15} height={15} alt="" />
+            Upload Material
+          </Link>
+
+          <div className="flex-1" />
+
+          {/* User info */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="text-right hidden md:block">
+              <p className="text-[13px] font-semibold text-white leading-none">{profile.full_name}</p>
+              <p className="text-[11px] text-white/50 mt-[3px] capitalize">{profile.grade ?? profile.role}</p>
+            </div>
+            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
+              <Image src="/icons/icon-user.jpg" width={36} height={36} alt="avatar" className="w-full h-full object-cover" />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/capture"
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+
+          {/* Divider */}
+          <div className="h-8 w-px bg-white/20 flex-shrink-0" />
+
+          {/* Calendar toggle + date + prev/next */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setCalendarOpen((o) => !o)}
+              className="text-white/60 hover:text-white transition-colors"
+              title={calendarOpen ? "Hide calendar" : "Show calendar"}
             >
-              <Camera className="w-4 h-4" />
-              Upload Material
-            </Link>
+              <Calendar className="w-[18px] h-[18px]" />
+            </button>
+            <span className="text-[13px] font-medium text-white whitespace-nowrap">{dateLabel}</span>
+            <button onClick={prevDay} className="text-white/60 hover:text-white transition-colors" title="Previous day">
+              <Image src="/icons/icon-previous.svg" width={22} height={22} alt="Prev" />
+            </button>
+            <button onClick={nextDay} className="text-white/60 hover:text-white transition-colors" title="Next day">
+              <Image src="/icons/icon-next.svg" width={22} height={22} alt="Next" />
+            </button>
           </div>
         </header>
 
-        <div className="px-8 py-6 space-y-8">
+        {/* ── Body ── */}
+        <div className="px-8 py-6 space-y-6">
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ── 3 Stat Cards ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-            {/* Materials to File */}
-            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
-              <p className="text-[18px] font-bold uppercase text-[#595959]">Materials to File</p>
-              <div className="flex items-center gap-[4px]">
-                <span className="text-[23px] font-bold text-black">{materialsToFile}</span>
-                <span className="text-[15px] text-black">|</span>
-                <span className="text-[15px] text-black">
-                  {materialsToFile === 0 ? "all clear" : materialsToFile === 1 ? "to file" : "to file"}
-                </span>
-              </div>
+            {/* Assignments to Complete */}
+            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                Assignments to Complete
+              </p>
+              <p className="text-[52px] font-bold text-white leading-none">{assignmentsToComplete}</p>
+              <p className="text-[13px] text-white/50">
+                {assignmentsToComplete === 0 ? "All caught up!" : assignmentsToComplete === 1 ? "pending assignment" : "pending assignments"}
+              </p>
             </div>
 
-            {/* Tasks to Complete */}
-            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
-              <p className="text-[18px] font-bold uppercase text-[#595959]">Tasks to Complete</p>
-              <div className="flex gap-1 w-full">
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{tasksThisWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">this week</span>
-                </div>
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{tasksNextWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">next week</span>
-                </div>
-              </div>
+            {/* Study Hours to Do */}
+            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                Study Hours to Do
+              </p>
+              <p className="text-[52px] font-bold text-white leading-none">
+                {studyHoursToDo}<span className="text-[28px] font-medium text-white/60 ml-1">h</span>
+              </p>
+              <p className="text-[13px] text-white/50">
+                {studyMinsToDo === 0 ? "No sessions scheduled" : "in planned study sessions"}
+              </p>
             </div>
 
-            {/* Assignments Due */}
-            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
-              <p className="text-[18px] font-bold uppercase text-[#595959]">Assignments Due</p>
-              <div className="flex gap-1 w-full">
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{assignmentsThisWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">this week</span>
-                </div>
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{assignmentsNextWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">next week</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Exams & Quizzes */}
-            <div className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col gap-3">
-              <p className="text-[18px] font-bold uppercase text-[#595959]">Exams &amp; Quizzes</p>
-              <div className="flex gap-1 w-full">
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{examsThisWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">this week</span>
-                </div>
-                <div className="flex flex-1 items-center gap-[4px]">
-                  <span className="text-[23px] font-bold text-black">{examsNextWeek}</span>
-                  <span className="text-[15px] text-black">|</span>
-                  <span className="text-[15px] text-black">next week</span>
-                </div>
-              </div>
+            {/* Upcoming Exams */}
+            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                Upcoming Exams
+              </p>
+              <p className="text-[52px] font-bold text-white leading-none">{upcomingExams}</p>
+              <p className="text-[13px] text-white/50">
+                {upcomingExams === 0 ? "No exams coming up" : upcomingExams === 1 ? "exam or quiz ahead" : "exams & quizzes ahead"}
+              </p>
             </div>
 
           </div>
 
-          {/* ── Recently Uploaded Materials ── */}
-          {inbox.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-slate-900">Recently Uploaded Materials</h2>
-                  <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
-                    {inbox.length} to file
-                  </span>
-                </div>
-                <Link href="/capture" className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-1">
-                  <Camera className="w-3 h-3" /> Add more
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {inbox.map((m) => {
-                  const cls = classes.find((c) => c.id === m.class_id);
-                  const isPdf = m.photo_url?.toLowerCase().endsWith(".pdf");
-                  const typeIcon = m.type === "notes"
-                    ? <StickyNote className="w-4 h-4 text-slate-400" />
-                    : m.type === "handout"
-                    ? <FileText className="w-4 h-4 text-blue-400" />
-                    : <ClipboardList className="w-4 h-4 text-amber-400" />;
-                  return (
-                    <div key={m.id} className="bg-white rounded-xl border border-slate-200 hover:border-indigo-200 hover:shadow-sm transition-all p-4 flex flex-col gap-3">
-                      {/* Thumbnail area */}
-                      <div className="w-full h-24 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
-                        {isPdf
-                          ? <div className="flex flex-col items-center gap-1"><FileText className="w-8 h-8 text-rose-400" /><span className="text-[10px] font-bold text-rose-400 uppercase">PDF</span></div>
-                          : <div className="flex flex-col items-center gap-1">{typeIcon}<span className="text-[10px] text-slate-400 capitalize">{m.type}</span></div>
-                        }
+          {/* ── Class Gauge Cards ── */}
+          {classes.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {classes.map((cls) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const clsAssignments = assignments.filter((a) => (a as any).class_id === cls.id);
+                const total     = clsAssignments.length;
+                const completed = clsAssignments.filter((a) => a.completed).length;
+                const pct       = total > 0 ? completed / total : 0;
+                const arcProgress = pct * GAUGE_ARC;
+                const strokeColor = gaugeColorMap[cls.color] ?? "#6366f1";
+                const perfIcon =
+                  pct >= 0.75 ? "/icons/icon-fire.svg" :
+                  pct >= 0.5  ? "/icons/icon-satisfied.svg" :
+                                 "/icons/icon-unsatisfied.svg";
+
+                return (
+                  <div key={cls.id} className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-5 flex flex-col items-center gap-3">
+                    <p className="text-[13px] font-semibold text-white text-center w-full truncate">{cls.name}</p>
+
+                    {/* Circular gauge */}
+                    <div className="relative w-[110px] h-[110px]">
+                      <svg viewBox="0 0 100 100" className="w-full h-full">
+                        {/* Background track */}
+                        <circle
+                          cx="50" cy="50" r={GAUGE_R}
+                          fill="none"
+                          stroke="rgba(255,255,255,0.08)"
+                          strokeWidth="7"
+                          strokeDasharray={`${GAUGE_ARC} ${GAUGE_CIRC}`}
+                          strokeLinecap="round"
+                          transform="rotate(-135 50 50)"
+                        />
+                        {/* Progress */}
+                        <circle
+                          cx="50" cy="50" r={GAUGE_R}
+                          fill="none"
+                          stroke={strokeColor}
+                          strokeWidth="7"
+                          strokeDasharray={`${arcProgress} ${GAUGE_CIRC}`}
+                          strokeLinecap="round"
+                          transform="rotate(-135 50 50)"
+                          style={{ transition: "stroke-dasharray 0.6s ease" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[22px] font-bold text-white leading-none">
+                          {Math.round(pct * 100)}%
+                        </span>
                       </div>
-                      {/* Class chip */}
-                      {cls && (
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[cls.color] ?? "bg-slate-400"}`} />
-                          <span className="text-xs font-medium text-slate-600 truncate">{cls.name}</span>
-                        </div>
-                      )}
+                    </div>
+
+                    {/* Performance icon + count */}
+                    <div className="flex items-center gap-2">
+                      <Image src={perfIcon} width={18} height={18} alt="" />
+                      <span className="text-[12px] text-white/50">
+                        {total === 0 ? "No assignments" : `${completed}/${total} done`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add class placeholder if fewer than 4 */}
+              {classes.length < 4 && (
+                <button
+                  onClick={() => setShowAddClass(true)}
+                  className="bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-[20px] p-5 flex flex-col items-center justify-center gap-2 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white/30" />
+                  </div>
+                  <span className="text-[12px] text-white/30">Add Course</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Assignments / Materials Table ── */}
+          <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 overflow-hidden">
+
+            {/* Table toolbar */}
+            <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-white/10">
+              <h2 className="text-[15px] font-bold text-white flex-1 min-w-0">Uploaded Materials</h2>
+
+              {/* Add assignment */}
+              <button
+                onClick={() => setShowAddAssignment(true)}
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-white/70 hover:text-white bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
+              >
+                <Image src="/icons/icon-add.svg" width={14} height={14} alt="" />
+                Add
+              </button>
+
+              {/* Search */}
+              <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 flex-shrink-0">
+                <Image src="/icons/icon-filter.svg" width={14} height={14} alt="" className="opacity-60" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  placeholder="Search…"
+                  className="bg-transparent text-[13px] text-white placeholder-white/30 focus:outline-none w-36"
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(""); setCurrentPage(1); }}>
+                    <Image src="/icons/icon-clear.svg" width={12} height={12} alt="Clear" className="opacity-60 hover:opacity-100 transition-opacity" />
+                  </button>
+                )}
+              </div>
+
+              {/* Sort: Due Date */}
+              <button
+                onClick={() => {
+                  if (sortField === "due_date") setSortDir((d) => d === "asc" ? "desc" : "asc");
+                  else { setSortField("due_date"); setSortDir("asc"); }
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                  sortField === "due_date" ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                Due Date
+                <Image
+                  src={sortField === "due_date" && sortDir === "desc" ? "/icons/icon-descending.svg" : "/icons/icon-ascending.svg"}
+                  width={12} height={12} alt=""
+                />
+              </button>
+
+              {/* Sort: Status */}
+              <button
+                onClick={() => {
+                  if (sortField === "status") setSortDir((d) => d === "asc" ? "desc" : "asc");
+                  else { setSortField("status"); setSortDir("asc"); }
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                  sortField === "status" ? "bg-white/20 text-white" : "text-white/50 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                Status
+                <Image
+                  src={sortField === "status" && sortDir === "desc" ? "/icons/icon-descending.svg" : "/icons/icon-ascending.svg"}
+                  width={12} height={12} alt=""
+                />
+              </button>
+            </div>
+
+            {/* Table rows */}
+            {paginatedAssignments.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-16 text-white/30">
+                <CheckCircle2 className="w-10 h-10 opacity-40" />
+                <p className="text-sm">
+                  {searchQuery ? "No assignments match your search." : "No assignments yet."}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setShowAddAssignment(true)}
+                    className="mt-1 flex items-center gap-1.5 text-[13px] text-indigo-400 hover:text-indigo-300 font-medium"
+                  >
+                    <Plus className="w-4 h-4" /> Add assignment
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {paginatedAssignments.map((a) => {
+                  const d = daysUntil(a.due_date);
+                  const isOverdue = !a.completed && d < 0;
+                  const statusLabel = a.completed
+                    ? "Completed"
+                    : isOverdue
+                    ? "Overdue"
+                    : d === 0
+                    ? "Due Today"
+                    : "Pending";
+                  const statusColor = a.completed
+                    ? "text-emerald-400"
+                    : isOverdue
+                    ? "text-rose-400"
+                    : d === 0
+                    ? "text-amber-400"
+                    : "text-white/40";
+
+                  const typeIcon =
+                    a.type === "exam"
+                      ? <FileText className="w-4 h-4 text-rose-400" />
+                      : a.type === "quiz"
+                      ? <ClipboardList className="w-4 h-4 text-amber-400" />
+                      : <StickyNote className="w-4 h-4 text-indigo-400" />;
+
+                  return (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-4 px-6 py-3.5 hover:bg-white/[0.03] transition-colors"
+                    >
+                      {/* Type icon */}
+                      <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                        {typeIcon}
+                      </div>
+
+                      {/* Class */}
+                      <div className="flex items-center gap-1.5 w-[120px] flex-shrink-0 min-w-0">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-400"}`} />
+                        <span className="text-[12px] text-white/60 truncate">{a.classes?.name ?? "—"}</span>
+                      </div>
+
+                      {/* Type badge */}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 capitalize ${
+                        a.type === "exam"
+                          ? "bg-rose-500/20 text-rose-300"
+                          : a.type === "quiz"
+                          ? "bg-amber-500/20 text-amber-300"
+                          : "bg-indigo-500/20 text-indigo-300"
+                      }`}>
+                        {a.type}
+                      </span>
+
                       {/* Title */}
-                      <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">{m.title}</p>
+                      <span className="text-[13px] font-medium text-white flex-1 min-w-0 truncate">{a.title}</span>
+
+                      {/* Due date */}
+                      <span className="text-[12px] text-white/40 flex-shrink-0 w-[90px] text-right hidden sm:block">
+                        {formatDate(a.due_date)}
+                      </span>
+
+                      {/* Status */}
+                      <span className={`text-[12px] font-semibold flex-shrink-0 w-[80px] text-right ${statusColor}`}>
+                        {statusLabel}
+                      </span>
+
                       {/* CTA */}
                       <Link
-                        href={`/material/${m.id}`}
-                        className="text-xs text-amber-600 font-semibold hover:text-amber-700 flex items-center gap-1"
+                        href="/calendar"
+                        className="flex items-center gap-1 text-[12px] text-white/40 hover:text-white transition-colors flex-shrink-0 whitespace-nowrap hidden lg:flex"
                       >
-                        Need to file <ChevronRight className="w-3 h-3" />
+                        Work on Assignment
+                        <Image src="/icons/icon-forward-arrow.svg" width={12} height={12} alt="" />
                       </Link>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── Main content ── */}
-          <div className="space-y-8">
-
-              {/* Due This Week */}
-              {thisWeekAssignments.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-slate-900">Due This Week</h2>
-                      <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">{thisWeekAssignments.length}</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {thisWeekAssignments.map((a) => {
-                      const days = daysUntil(a.due_date);
-                      return (
-                        <div key={a.id} className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-2 hover:border-indigo-200 hover:shadow-sm transition-all">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-300"}`} />
-                            <span className="text-xs text-slate-500 truncate font-medium">{a.classes?.name ?? "—"}</span>
-                            <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-50 text-rose-600" : a.type === "quiz" ? "bg-violet-50 text-violet-600" : "bg-blue-50 text-blue-600"}`}>
-                              {a.type}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-400">{formatDate(a.due_date)}</p>
-                          <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">{a.title}</p>
-                          <div className="flex items-center justify-between mt-auto pt-1 border-t border-slate-100">
-                            <span className={`text-xs font-bold ${days <= 2 ? "text-rose-500" : "text-amber-500"}`}>
-                              {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d left`}
-                            </span>
-                            <Link href="/calendar" className="text-[11px] text-indigo-500 font-medium hover:underline">
-                              View →
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Due Next Week */}
-              {nextWeekAssignments.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-slate-900">Due Next Week</h2>
-                      <span className="text-xs bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-full">{nextWeekAssignments.length}</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {nextWeekAssignments.map((a) => (
-                      <div key={a.id} className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-2 hover:border-indigo-200 hover:shadow-sm transition-all">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-300"}`} />
-                          <span className="text-xs text-slate-500 truncate font-medium">{a.classes?.name ?? "—"}</span>
-                          <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-50 text-rose-600" : a.type === "quiz" ? "bg-violet-50 text-violet-600" : "bg-blue-50 text-blue-600"}`}>
-                            {a.type}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">{formatDate(a.due_date)}</p>
-                        <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">{a.title}</p>
-                        <div className="flex items-center justify-between mt-auto pt-1 border-t border-slate-100">
-                          <span className="text-xs font-medium text-slate-400">{daysUntil(a.due_date)}d away</span>
-                          <Link href="/calendar" className="text-[11px] text-indigo-500 font-medium hover:underline">View →</Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Overdue */}
-              {overdueAssignments.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-rose-600">Overdue</h2>
-                      <span className="text-xs bg-rose-100 text-rose-600 font-semibold px-2 py-0.5 rounded-full">{overdueAssignments.length}</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {overdueAssignments.map((a) => (
-                      <div key={a.id} className="bg-white rounded-xl border border-rose-200 p-4 flex flex-col gap-2 hover:shadow-sm transition-all">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colorMap[a.classes?.color ?? ""] ?? "bg-slate-300"}`} />
-                          <span className="text-xs text-slate-500 truncate font-medium">{a.classes?.name ?? "—"}</span>
-                          <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${a.type === "exam" ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600"}`}>
-                            {a.type}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">{formatDate(a.due_date)}</p>
-                        <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">{a.title}</p>
-                        <div className="flex items-center justify-between mt-auto pt-1 border-t border-rose-100">
-                          <span className="text-xs font-bold text-rose-500">{Math.abs(daysUntil(a.due_date))}d overdue</span>
-                          <Link href="/calendar" className="text-[11px] text-indigo-500 font-medium hover:underline">View →</Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Empty state */}
-              {thisWeekAssignments.length === 0 && nextWeekAssignments.length === 0 && overdueAssignments.length === 0 && (
-                <div className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-10 text-center">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-300 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-slate-700 mb-1">You&apos;re all caught up!</p>
-                  <p className="text-xs text-slate-400 mb-4">No assignments due in the next two weeks.</p>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-3 border-t border-white/10">
+                <span className="text-[12px] text-white/30">{sortedAssignments.length} assignments</span>
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setShowAddAssignment(true)}
-                    className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-medium bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="disabled:opacity-20 transition-opacity"
                   >
-                    <Plus className="w-4 h-4" /> Add assignment
+                    <Image src="/icons/icon-previous.svg" width={20} height={20} alt="Previous" />
+                  </button>
+                  <span className="text-[13px] text-white/70 min-w-[60px] text-center">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="disabled:opacity-20 transition-opacity"
+                  >
+                    <Image src="/icons/icon-next.svg" width={20} height={20} alt="Next" />
                   </button>
                 </div>
-              )}
+              </div>
+            )}
           </div>
+
         </div>
       </main>
 
-      {/* ── Right calendar panel with slide animation ── */}
-      <div className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}>
+      {/* ── Right calendar panel ── */}
+      <div
+        className={`flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sticky top-0 h-screen ${calendarOpen ? "w-[640px]" : "w-0"}`}
+      >
         <div className="w-[640px] h-full bg-[#0A2637]/75 border-l border-white/10 flex flex-col overflow-hidden">
 
-          {/* ── Month section ── */}
+          {/* Month section */}
           <div className="px-[40px] pt-[20px] pb-[40px] border-b border-white/10 flex flex-col gap-[25px] flex-shrink-0">
 
             {/* Date header + month nav */}
@@ -731,14 +838,17 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               ))}
             </div>
 
-            {/* Day cells — collapsible month/week */}
-            <div className="transition-all duration-300 ease-in-out overflow-hidden" style={{ maxHeight: calendarExpanded ? `${calendarRows.length * 46}px` : "46px" }}>
+            {/* Day cells — collapsible */}
+            <div
+              className="transition-all duration-300 ease-in-out overflow-hidden"
+              style={{ maxHeight: calendarExpanded ? `${calendarRows.length * 46}px` : "46px" }}
+            >
               {visibleRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="grid grid-cols-7">
                   {row.map((day, colIdx) => {
                     if (!day) return <div key={colIdx} className="h-[46px]" />;
                     const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                    const isToday = dateStr === todayStr;
+                    const isToday    = dateStr === todayStr;
                     const isSelected = dateStr === selectedDate && !isToday;
                     const aTypes = assignmentTypesByDate[dateStr];
                     const sTypes = sessionTypesByDate[dateStr];
@@ -750,7 +860,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                         className="flex flex-col items-center justify-start pt-[6px] h-[46px] hover:bg-white/10 rounded-lg transition-colors"
                       >
                         <span className={`w-[30px] h-[30px] flex items-center justify-center rounded-full text-[16px] leading-none
-                          ${isToday ? "bg-black text-white font-bold" : ""}
+                          ${isToday    ? "bg-black text-white font-bold" : ""}
                           ${isSelected ? "ring-2 ring-white/40 font-bold text-white" : ""}
                           ${!isToday && !isSelected ? "font-normal text-white" : ""}
                         `}>
@@ -776,16 +886,16 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               ))}
             </div>
 
-            {/* Expand/collapse handle */}
+            {/* Expand / collapse handle */}
             <button
               onClick={() => setCalendarExpanded((v) => !v)}
               className="w-full flex justify-center pt-2"
             >
-              <div className={`w-8 h-1 rounded-full bg-white/30 hover:bg-white/50 transition-colors`} />
+              <div className="w-8 h-1 rounded-full bg-white/30 hover:bg-white/50 transition-colors" />
             </button>
           </div>
 
-          {/* ── Daily timeline ── */}
+          {/* Daily timeline */}
           <div className="flex-1 overflow-y-auto min-h-0">
 
             {/* Day sub-header */}
@@ -838,11 +948,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
 
               {/* Session blocks */}
               {selectedDateSessions.map((s) => {
-                const origTop = slotTop(s.start_time ?? "09:00");
-                const top     = dragTop?.sessionId === s.id ? dragTop.top : origTop;
-                const height  = slotHeight(s.duration_minutes);
+                const origTop   = slotTop(s.start_time ?? "09:00");
+                const top       = dragTop?.sessionId === s.id ? dragTop.top : origTop;
+                const height    = slotHeight(s.duration_minutes);
                 const isDragging = dragTop?.sessionId === s.id;
-                const sType   = (s.type as SessionType) ?? "study";
+                const sType     = (s.type as SessionType) ?? "study";
                 return (
                   <div
                     key={s.id}
@@ -878,7 +988,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               </Link>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -890,7 +999,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             onClick={() => setPopover((p) => ({ ...p, open: false }))}
           />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 animate-in fade-in slide-in-from-bottom-4 duration-200">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {popover.sessionId ? "Edit session" : "New session"}
@@ -979,7 +1087,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               </div>
             </div>
 
-            {/* Completed toggle — only for existing sessions */}
+            {/* Completed toggle */}
             {popover.sessionId && (
               <button
                 onClick={() => setPopover((p) => ({ ...p, completed: !p.completed }))}

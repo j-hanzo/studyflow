@@ -1,29 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, Calendar, Camera, Home, MessageCircle,
+  Calendar, MessageCircle,
   Bell, Users, ChevronRight, Sparkles, LogOut, FlipHorizontal,
 } from "lucide-react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Class } from "@/lib/supabase/types";
 
-const studentNav = [
-  { href: "/", icon: Home, label: "Dashboard" },
-  { href: "/capture", icon: Camera, label: "Capture" },
-  { href: "/calendar", icon: Calendar, label: "Calendar" },
-  { href: "/tutor", icon: Sparkles, label: "AI Tutor" },
-  { href: "/practice", icon: FlipHorizontal, label: "Flashcards" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
+type NavItem = {
+  href: string;
+  icon?: React.ElementType;
+  iconPath?: string;
+  label: string;
+};
+
+const studentNav: NavItem[] = [
+  { href: "/",         iconPath: "/icons/icon-home.svg",   label: "Dashboard" },
+  { href: "/capture",  iconPath: "/icons/icon-upload.svg", label: "Upload" },
+  { href: "/calendar", icon: Calendar,                     label: "Calendar" },
+  { href: "/tutor",    icon: Sparkles,                     label: "AI Tutor" },
+  { href: "/practice", icon: FlipHorizontal,               label: "Flashcards" },
+  { href: "/messages", icon: MessageCircle,                label: "Messages" },
 ];
 
-const parentNav = [
-  { href: "/", icon: Users, label: "Overview" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/reminders", icon: Bell, label: "Reminders" },
+const parentNav: NavItem[] = [
+  { href: "/",          icon: Users,          label: "Overview" },
+  { href: "/messages",  icon: MessageCircle,  label: "Messages" },
+  { href: "/reminders", icon: Bell,           label: "Reminders" },
 ];
 
 const classColors: Record<string, string> = {
@@ -68,8 +75,10 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
   return (
     <aside className="w-64 min-h-screen bg-[#0A2637]/75 border-r border-white/10 flex flex-col flex-shrink-0">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-white/10">
-        <Image src="/icons/lumen-logo.svg" alt="Lumen" width={260} height={75} className="w-full h-auto" priority />
+      <div className="px-6 py-5 border-b border-white/10 flex items-center">
+        <span className="text-[26px] font-bold tracking-widest text-white select-none">
+          LU<span className="text-[#E6FF5B]">MEN</span>
+        </span>
       </div>
 
       {/* Mode switcher */}
@@ -98,7 +107,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {nav.map(({ href, icon: Icon, label }) => (
+        {nav.map(({ href, icon: Icon, iconPath, label }) => (
           <Link
             key={`${href}-${label}`}
             href={href}
@@ -109,7 +118,11 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
                 : "text-white/70 hover:bg-white/10 hover:text-white"
             )}
           >
-            <Icon className="w-4 h-4 flex-shrink-0" />
+            {iconPath ? (
+              <Image src={iconPath} alt="" width={18} height={18} className="flex-shrink-0 opacity-80" />
+            ) : Icon ? (
+              <Icon className="w-4 h-4 flex-shrink-0" />
+            ) : null}
             {label}
           </Link>
         ))}
@@ -118,7 +131,7 @@ export default function Sidebar({ mode, profile = defaultProfile, classes = [], 
           <>
             <div className="pt-4 pb-2">
               <div className="flex items-center justify-between px-3">
-                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">My Classes</span>
+                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">My Courses</span>
                 <button onClick={onAddClass} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Add</button>
               </div>
             </div>
