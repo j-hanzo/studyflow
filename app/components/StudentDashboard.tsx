@@ -457,11 +457,11 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           {/* User info */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="text-right hidden md:block">
-              <p className="text-[13px] font-semibold text-white leading-none">{profile.full_name}</p>
-              <p className="text-[11px] text-white/50 mt-[3px] capitalize">{profile.grade ?? profile.role}</p>
+              <h3 className="text-[29px] font-medium text-white leading-none">{profile.full_name}</h3>
+              <p className="text-[16px] text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
             </div>
-            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
-              <Image src="/icons/icon-user.jpg" width={36} height={36} alt="avatar" className="w-full h-full object-cover" />
+            <div className="w-[70px] h-[70px] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
+              <Image src="/icons/icon-user.jpg" width={70} height={70} alt="avatar" className="w-full h-full object-cover" />
             </div>
           </div>
 
