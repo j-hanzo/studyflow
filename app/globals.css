@@ -50,6 +50,11 @@ small { font-size: clamp(13px, 0.9vw,  16px); }
     radial-gradient(ellipse 500px 500px at 20% 75%, rgba(139, 92, 246, 0.10), transparent 70%);
 }
 
+/* ── Dashboard card gradient ── */
+.card-gradient {
+  background: linear-gradient(160deg, rgba(7, 36, 71, 0.7) 0%, rgba(18, 57, 75, 0.7) 100%);
+}
+
 /* ── Dark scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;

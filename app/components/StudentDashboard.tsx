@@ -534,7 +534,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Assignments to Complete */}
-            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Assignments to Complete
               </p>
@@ -545,7 +545,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Study Hours to Do */}
-            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Study Hours to Do
               </p>
@@ -558,7 +558,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
             </div>
 
             {/* Upcoming Exams */}
-            <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-6 flex flex-col gap-4">
+            <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-6 flex flex-col gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
                 Upcoming Exams
               </p>
@@ -587,7 +587,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                                  "/icons/icon-unsatisfied.svg";
 
                 return (
-                  <div key={cls.id} className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 p-5 flex flex-col items-center gap-3">
+                  <div key={cls.id} className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 p-5 flex flex-col items-center gap-3">
                     <p className="text-[13px] font-semibold text-white text-center w-full truncate">{cls.name}</p>
 
                     {/* Circular gauge */}
@@ -637,7 +637,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
               {classes.length < 4 && (
                 <button
                   onClick={() => setShowAddClass(true)}
-                  className="bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-[20px] p-5 flex flex-col items-center justify-center gap-2 transition-colors"
+                  className="bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-[6px] p-5 flex flex-col items-center justify-center gap-2 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
                     <Plus className="w-5 h-5 text-white/30" />
@@ -649,7 +649,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           )}
 
           {/* ── Assignments / Materials Table ── */}
-          <div className="bg-[#0A2637]/75 backdrop-blur-sm rounded-[20px] border border-white/10 overflow-hidden">
+          <div className="card-gradient backdrop-blur-sm rounded-[6px] border border-white/10 overflow-hidden">
 
             {/* Table toolbar */}
             <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-white/10">
@@ -992,7 +992,7 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                       dragRef.current = { sessionId: s.id, startY: e.pageY, origTop, currentTop: origTop, moved: false };
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className={`absolute rounded-[20px] px-4 py-2 border-4 select-none transition-shadow
+                    className={`absolute rounded-[6px] px-4 py-2 border-4 select-none transition-shadow
                       ${isDragging ? "shadow-xl cursor-grabbing z-20 opacity-90" : "cursor-grab hover:shadow-md"}
                       ${sessionBlockClasses(sType, s.completed)}`}
                     style={{ top: top + 2, height: height - 4, left: "120px", right: "40px" }}
