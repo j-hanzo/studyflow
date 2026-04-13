@@ -399,14 +399,14 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
   return (
     <div className="flex min-h-screen blob-gradient-bg">
 
-      {/* ── Floating sidebar toggle ── */}
+      {/* ── Floating sidebar toggle — midpoint sits on panel right edge ── */}
       <button
         onClick={() => setSidebarOpen((o) => !o)}
-        style={{ left: sidebarOpen ? "244px" : "12px" }}
+        style={{ left: sidebarOpen ? "234px" : "-22px" }}
         className={`fixed top-5 z-50 transition-[left] duration-300 ease-in-out ${sidebarOpen ? "" : "[transform:scaleX(-1)]"}`}
         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={48} height={48} />
+        <Image src="/icons/icon-show-hide-left-panel.svg" alt="" width={44} height={44} />
       </button>
 
       {/* ── Modals ── */}
