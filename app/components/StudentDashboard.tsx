@@ -919,21 +919,6 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
           {/* Daily timeline */}
           <div className="flex-1 overflow-y-auto min-h-0">
 
-            {/* Day sub-header */}
-            <div className="px-[40px] pt-6 pb-3 flex items-center justify-between sticky top-0 bg-[#0A2637] z-10 border-b border-white/10">
-              <p className="text-[16px] font-bold text-white">
-                {selectedDate === todayStr
-                  ? "Today"
-                  : new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-              </p>
-              <button
-                onClick={() => openPopoverNew("09:00")}
-                className="flex items-center gap-1 text-[15px] text-indigo-400 font-semibold hover:text-indigo-300"
-              >
-                <Plus className="w-4 h-4" /> Add
-              </button>
-            </div>
-
             {/* Assignments due banner */}
             {selectedDateAssignments.length > 0 && (
               <div className="px-[40px] py-3 border-b border-amber-500/20 bg-amber-500/10 space-y-1.5 flex-shrink-0">
@@ -955,13 +940,17 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
                 <div
                   key={i}
                   onClick={() => { if (!dragRef.current?.moved) openPopoverNew(slot.timeStr); }}
-                  className="absolute left-0 right-0 flex items-center hover:bg-white/5 cursor-pointer transition-colors"
+                  className="absolute left-0 right-0 cursor-pointer"
                   style={{ top: i * SLOT_H, height: SLOT_H }}
                 >
-                  <span className="w-[120px] pl-[40px] text-[16px] text-[#9f9f9f] flex-shrink-0 select-none leading-none whitespace-nowrap">
+                  {/* Hover highlight fills the space between this line and the next */}
+                  <div className="absolute inset-0 top-[1px] hover:bg-white/5 transition-colors" />
+                  {/* Horizontal rule at the top of each slot */}
+                  <div className="absolute top-0 left-[120px] right-[40px] border-t border-white/10" />
+                  {/* Time label centered on the rule */}
+                  <span className="absolute top-0 -translate-y-1/2 left-0 w-[120px] pl-[40px] text-[16px] text-[#9f9f9f] select-none leading-none whitespace-nowrap">
                     {slot.label}
                   </span>
-                  <div className="flex-1 border-t border-white/10 mr-[40px]" />
                 </div>
               ))}
 
