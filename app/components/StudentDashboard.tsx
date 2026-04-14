@@ -521,33 +521,33 @@ export default function StudentDashboard({ profile, classes, assignments, studyS
       >
 
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 px-[clamp(32px,3.5vw,56px)]">
-          <div className="py-3 flex items-center gap-[clamp(12px,1.5vw,16px)] border-b border-white/10">
+        <header className="sticky top-0 z-10 px-[clamp(16px,3.5vw,56px)]">
+          <div className="py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-[clamp(12px,1.5vw,16px)] border-b border-white/10">
 
-          {/* Title + upload button */}
-          <div className="flex items-center gap-[clamp(20px,2.5vw,40px)] flex-shrink-0">
-            <h1 className="text-white whitespace-nowrap leading-none">{firstName}&apos;s Dashboard</h1>
-            <Link
-              href="/capture"
-              className="flex items-center gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[clamp(15px,1.2vw,19px)] font-medium px-[clamp(12px,1vw,16px)] py-[clamp(6px,0.5vw,8px)] rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" className="w-[clamp(18px,1.6vw,26px)] h-[clamp(18px,1.6vw,26px)]" />
-              Upload Material
-            </Link>
-          </div>
-
-          <div className="flex-1" />
-
-          {/* User info */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="text-right hidden md:block">
-              <h3 className="text-white leading-none">{profile.full_name}</h3>
-              <p className="text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
-            </div>
-            <div className="w-[clamp(44px,4.3vw,70px)] h-[clamp(44px,4.3vw,70px)] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
-              <Image src="/icons/icon-user.jpg" width={70} height={70} alt="avatar" className="w-full h-full object-cover" />
+          {/* Top row: title + avatar */}
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-white leading-tight min-w-0">{firstName}&apos;s Dashboard</h1>
+            <div className="flex-1 hidden sm:block" />
+            {/* Avatar — always visible, user info text hidden on mobile */}
+            <div className="flex items-center gap-3 flex-shrink-0 ml-auto sm:ml-0">
+              <div className="text-right hidden md:block">
+                <h3 className="text-white leading-none">{profile.full_name}</h3>
+                <p className="text-white/50 mt-1 capitalize">{profile.grade ?? profile.role}</p>
+              </div>
+              <div className="w-[clamp(36px,4.3vw,70px)] h-[clamp(36px,4.3vw,70px)] rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20">
+                <Image src="/icons/icon-user.jpg" width={70} height={70} alt="avatar" className="w-full h-full object-cover" />
+              </div>
             </div>
           </div>
+
+          {/* Upload button — full width on mobile, inline on desktop */}
+          <Link
+            href="/capture"
+            className="flex items-center justify-center sm:justify-start gap-2 bg-[#E6FF5B] hover:bg-[#d4ec48] text-[#062243] text-[clamp(15px,1.2vw,19px)] font-medium px-[clamp(12px,1vw,16px)] py-[clamp(6px,0.5vw,8px)] rounded-[6px] transition-colors whitespace-nowrap flex-shrink-0 w-full sm:w-auto order-last sm:order-none"
+          >
+            <Image src="/icons/icon-upload.svg" width={26} height={26} alt="" className="w-[clamp(18px,1.6vw,26px)] h-[clamp(18px,1.6vw,26px)]" />
+            Upload Material
+          </Link>
 
           </div>
         </header>
